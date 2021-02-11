@@ -78,13 +78,15 @@ if __name__=="__main__":
       else:
         vardata=var[:]
       new_d.createVariable(v, vdtype, vdims)
+      print("Created variable : {} {} {}".format(v, vdtype, vdims))
+      print(vardata.shape)
       new_d.variables[v][:]=vardata
     new_d.sync()
     new_d.close()
     filename=args.input.split("/")[-1]
     filedir="/".join(args.input.split("/")[:-1])
     brief=filename.split("_")[0]
-    os.system("mv temp.nc {}/{}_{}.nc".format(filedir,brief, ddt0[:16]))
     print("rm {}".format(args.input))
     os.system("rm {}".format(args.input))
+    os.system("mv temp.nc {}/{}_{}.nc".format(filedir,brief, ddt0[:16]))
   dataset.close()
