@@ -82,6 +82,7 @@ if __name__=="__main__":
       if isinstance(vardata, list):
         print(len(vardata))
         if len(vardata)==16:
+          print("wrong len vardata : {}".format(vardata))
           vardata=vardata+["\0"]
       else:
         print(vardata.shape)
