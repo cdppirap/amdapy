@@ -81,6 +81,7 @@ if __name__=="__main__":
       new_d.variables[v][:]=vardata
     new_d.sync()
     new_d.close()
-    brief=args.input.split("_")[0]
+    filename=args.input.split("/")[-1]
+    brief=filename.split("_")[0]
     os.system("mv temp.nc {}_{}.nc".format(brief, ddt0[:16]))
   dataset.close()
