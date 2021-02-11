@@ -1,0 +1,185 @@
+\hypertarget{pdsdump_8py}{}\doxysection{pdsdump.\+py File Reference}
+\label{pdsdump_8py}\index{pdsdump.py@{pdsdump.py}}
+
+
+\mbox{\hyperlink{pdsdump_8py}{pdsdump.\+py}} script for querying P\+DS A\+S\+C\+II datasets, and converting them to net\+C\+DF.  
+
+
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \mbox{\hyperlink{pdsdump_8py_a461083c144177e3d6f49f86c0345144b}{amdapy.\+pdsdump.\+parse\+\_\+args}} ()
+\begin{DoxyCompactList}\small\item\em parse\+\_\+args \end{DoxyCompactList}\item 
+def \mbox{\hyperlink{pdsdump_8py_a2b3018a0912c35cd7c28fda1bce3f78c}{amdapy.\+pdsdump.\+parse\+\_\+namemap\+\_\+hint}} (hint\+\_\+str)
+\begin{DoxyCompactList}\small\item\em parse\+\_\+namemap\+\_\+hint \end{DoxyCompactList}\item 
+def \mbox{\hyperlink{pdsdump_8py_a25dec9e308f6a05e51faa18ea6307391}{amdapy.\+pdsdump.\+str\+\_\+is\+\_\+numeric}} (in\+\_\+str)
+\begin{DoxyCompactList}\small\item\em str\+\_\+is\+\_\+numeric \end{DoxyCompactList}\item 
+def \mbox{\hyperlink{pdsdump_8py_abc291fcd6728a5991282ff2e3a332fe6}{amdapy.\+pdsdump.\+get\+\_\+column\+\_\+name\+\_\+mapping}} (data, hint=None)
+\begin{DoxyCompactList}\small\item\em get\+\_\+column\+\_\+name\+\_\+mapping \end{DoxyCompactList}\item 
+def \mbox{\hyperlink{pdsdump_8py_af02bc6b1fd13b25357b7025ba02d4f2e}{amdapy.\+pdsdump.\+dt\+\_\+to\+\_\+doy}} (dt)
+\begin{DoxyCompactList}\small\item\em dt\+\_\+to\+\_\+doy \end{DoxyCompactList}\item 
+def \mbox{\hyperlink{pdsdump_8py_ad883d658bb98ab95aeaa1f1666691200}{amdapy.\+pdsdump.\+ddtime}} (dt)
+\begin{DoxyCompactList}\small\item\em ddtime \end{DoxyCompactList}\item 
+def \mbox{\hyperlink{pdsdump_8py_adc6b565e618d25c9f9fe0eb0561e8284}{amdapy.\+pdsdump.\+pds\+\_\+to\+\_\+netcdf}} (data, output=None, namemap=None, prefix=None)
+\begin{DoxyCompactList}\small\item\em pds\+\_\+to\+\_\+netcdf \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{pdsdump_8py_a162cd7b3738060f6f6b2cb7d2ac9a244}\label{pdsdump_8py_a162cd7b3738060f6f6b2cb7d2ac9a244}} 
+def \mbox{\hyperlink{pdsdump_8py_a162cd7b3738060f6f6b2cb7d2ac9a244}{amdapy.\+pdsdump.\+args}} = parse\+\_\+args()
+\begin{DoxyCompactList}\small\item\em if this file is called as script then parse arguments. \end{DoxyCompactList}\item 
+\mbox{\Hypertarget{pdsdump_8py_ae212b8d2ce9a54fd64a92d2727c04cfa}\label{pdsdump_8py_ae212b8d2ce9a54fd64a92d2727c04cfa}} 
+def {\bfseries amdapy.\+pdsdump.\+label\+\_\+filename} = args.\+input+\char`\"{}.L\+BL\char`\"{}
+\item 
+\mbox{\Hypertarget{pdsdump_8py_a2475d4cd03b852e0d9c6c5990ce23772}\label{pdsdump_8py_a2475d4cd03b852e0d9c6c5990ce23772}} 
+def {\bfseries amdapy.\+pdsdump.\+data\+\_\+filename} = args.\+input+\char`\"{}.T\+AB\char`\"{}
+\item 
+\mbox{\Hypertarget{pdsdump_8py_a1ff8828e8e17b93feb7ba858f305a75d}\label{pdsdump_8py_a1ff8828e8e17b93feb7ba858f305a75d}} 
+{\bfseries amdapy.\+pdsdump.\+data} = P\+D\+S\+Dataset(label\+\_\+filename=label\+\_\+filename, data\+\_\+filename=data\+\_\+filename, table\+\_\+sep=args.\+separator)
+\item 
+\mbox{\Hypertarget{pdsdump_8py_a75566a481153335da3e336d480770032}\label{pdsdump_8py_a75566a481153335da3e336d480770032}} 
+def {\bfseries amdapy.\+pdsdump.\+output\+\_\+filename} = args.\+input+\char`\"{}.nc\char`\"{}
+\item 
+\mbox{\Hypertarget{pdsdump_8py_ac96a1900e5636000b93af43d0d5efb52}\label{pdsdump_8py_ac96a1900e5636000b93af43d0d5efb52}} 
+def {\bfseries amdapy.\+pdsdump.\+namemap} = get\+\_\+column\+\_\+name\+\_\+mapping(data,hint=args.\+namemap)
+\item 
+\mbox{\Hypertarget{pdsdump_8py_a74ae88cd99e673e1f94684516dfcb392}\label{pdsdump_8py_a74ae88cd99e673e1f94684516dfcb392}} 
+{\bfseries amdapy.\+pdsdump.\+output}
+\item 
+\mbox{\Hypertarget{pdsdump_8py_a644e66132fb82c7a8755bd22a5461692}\label{pdsdump_8py_a644e66132fb82c7a8755bd22a5461692}} 
+{\bfseries amdapy.\+pdsdump.\+prefix}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\mbox{\hyperlink{pdsdump_8py}{pdsdump.\+py}} script for querying P\+DS A\+S\+C\+II datasets, and converting them to net\+C\+DF. 
+
+\begin{DoxyAuthor}{Author}
+Alexandre Schulz
+\end{DoxyAuthor}
+Query and convert P\+DS A\+S\+C\+II files. Usage \+: --dump \+: print contents of the dataset --convert2netcdf \+: convert file to netcdf -\/o, --output \+: output filename 
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{pdsdump_8py_ad883d658bb98ab95aeaa1f1666691200}\label{pdsdump_8py_ad883d658bb98ab95aeaa1f1666691200}} 
+\index{pdsdump.py@{pdsdump.py}!ddtime@{ddtime}}
+\index{ddtime@{ddtime}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{ddtime()}{ddtime()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+ddtime (\begin{DoxyParamCaption}\item[{}]{dt }\end{DoxyParamCaption})}
+
+
+
+ddtime 
+
+Get D\+D\+Time for datetime. 
+\begin{DoxyParams}{Parameters}
+{\em dt} & datetime object. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+D\+D\+Time. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{pdsdump_8py_af02bc6b1fd13b25357b7025ba02d4f2e}\label{pdsdump_8py_af02bc6b1fd13b25357b7025ba02d4f2e}} 
+\index{pdsdump.py@{pdsdump.py}!dt\_to\_doy@{dt\_to\_doy}}
+\index{dt\_to\_doy@{dt\_to\_doy}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{dt\_to\_doy()}{dt\_to\_doy()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+dt\+\_\+to\+\_\+doy (\begin{DoxyParamCaption}\item[{}]{dt }\end{DoxyParamCaption})}
+
+
+
+dt\+\_\+to\+\_\+doy 
+
+Convert datetime object to Day\+Of\+Year 
+\begin{DoxyParams}{Parameters}
+{\em dt} & datetime object. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+int 
+\end{DoxyReturn}
+\mbox{\Hypertarget{pdsdump_8py_abc291fcd6728a5991282ff2e3a332fe6}\label{pdsdump_8py_abc291fcd6728a5991282ff2e3a332fe6}} 
+\index{pdsdump.py@{pdsdump.py}!get\_column\_name\_mapping@{get\_column\_name\_mapping}}
+\index{get\_column\_name\_mapping@{get\_column\_name\_mapping}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{get\_column\_name\_mapping()}{get\_column\_name\_mapping()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+get\+\_\+column\+\_\+name\+\_\+mapping (\begin{DoxyParamCaption}\item[{}]{data,  }\item[{}]{hint = {\ttfamily None} }\end{DoxyParamCaption})}
+
+
+
+get\+\_\+column\+\_\+name\+\_\+mapping 
+
+Get column name mapping. 
+\begin{DoxyParams}{Parameters}
+{\em data} & netcdf data object. \\
+\hline
+{\em hint} & (default=None) column name hint. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+column name mapping. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{pdsdump_8py_a461083c144177e3d6f49f86c0345144b}\label{pdsdump_8py_a461083c144177e3d6f49f86c0345144b}} 
+\index{pdsdump.py@{pdsdump.py}!parse\_args@{parse\_args}}
+\index{parse\_args@{parse\_args}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{parse\_args()}{parse\_args()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+parse\+\_\+args (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+parse\+\_\+args 
+
+Parse command line arguments. \mbox{\Hypertarget{pdsdump_8py_a2b3018a0912c35cd7c28fda1bce3f78c}\label{pdsdump_8py_a2b3018a0912c35cd7c28fda1bce3f78c}} 
+\index{pdsdump.py@{pdsdump.py}!parse\_namemap\_hint@{parse\_namemap\_hint}}
+\index{parse\_namemap\_hint@{parse\_namemap\_hint}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{parse\_namemap\_hint()}{parse\_namemap\_hint()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+parse\+\_\+namemap\+\_\+hint (\begin{DoxyParamCaption}\item[{}]{hint\+\_\+str }\end{DoxyParamCaption})}
+
+
+
+parse\+\_\+namemap\+\_\+hint 
+
+Parse the user supplied column name mapping. 
+\begin{DoxyParams}{Parameters}
+{\em hint\+\_\+str} & hint string. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+column name mapping. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{pdsdump_8py_adc6b565e618d25c9f9fe0eb0561e8284}\label{pdsdump_8py_adc6b565e618d25c9f9fe0eb0561e8284}} 
+\index{pdsdump.py@{pdsdump.py}!pds\_to\_netcdf@{pds\_to\_netcdf}}
+\index{pds\_to\_netcdf@{pds\_to\_netcdf}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{pds\_to\_netcdf()}{pds\_to\_netcdf()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+pds\+\_\+to\+\_\+netcdf (\begin{DoxyParamCaption}\item[{}]{data,  }\item[{}]{output = {\ttfamily None},  }\item[{}]{namemap = {\ttfamily None},  }\item[{}]{prefix = {\ttfamily None} }\end{DoxyParamCaption})}
+
+
+
+pds\+\_\+to\+\_\+netcdf 
+
+Convert P\+DS A\+S\+C\+II file to netcdf. 
+\begin{DoxyParams}{Parameters}
+{\em data} & data object. \\
+\hline
+{\em output} & (default=None) output file. \\
+\hline
+{\em namemap} & (default=None) column name mapping. \\
+\hline
+{\em prefix} & (default=None) apply prefix to output filename. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{pdsdump_8py_a25dec9e308f6a05e51faa18ea6307391}\label{pdsdump_8py_a25dec9e308f6a05e51faa18ea6307391}} 
+\index{pdsdump.py@{pdsdump.py}!str\_is\_numeric@{str\_is\_numeric}}
+\index{str\_is\_numeric@{str\_is\_numeric}!pdsdump.py@{pdsdump.py}}
+\doxysubsubsection{\texorpdfstring{str\_is\_numeric()}{str\_is\_numeric()}}
+{\footnotesize\ttfamily def amdapy.\+pdsdump.\+str\+\_\+is\+\_\+numeric (\begin{DoxyParamCaption}\item[{}]{in\+\_\+str }\end{DoxyParamCaption})}
+
+
+
+str\+\_\+is\+\_\+numeric 
+
+Check that string can be converted to integer. 
+\begin{DoxyParams}{Parameters}
+{\em in\+\_\+str} & string to check. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+bool. 
+\end{DoxyReturn}
