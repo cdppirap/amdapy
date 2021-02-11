@@ -79,7 +79,10 @@ if __name__=="__main__":
         vardata=var[:]
       new_d.createVariable(v, vdtype, vdims)
       print("Created variable : {} {} {}".format(v, vdtype, vdims))
-      print(vardata.shape)
+      if isinstance(vardata, list):
+        print(len(vardata))
+      else:
+        print(vardata.shape)
       new_d.variables[v][:]=vardata
     new_d.sync()
     new_d.close()
