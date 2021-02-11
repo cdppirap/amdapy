@@ -49,8 +49,8 @@ if __name__=="__main__":
 
   ddt0=DDTime.from_utctimestamp(t[0])
   ddt1=DDTime.from_utctimestamp(t[-1])
-  print("Time 0 to DDTIME : {}".format(ddt0))
-  print("Time -1 to DDTIME : {}".format(ddt1))
+  print("Time 0 to DDTIME : {} {}".format(ddt0, len(ddt0)))
+  print("Time -1 to DDTIME : {} {}".format(ddt1, len(ddt1)))
   mods={}
   if ddt0!=st_str:
     print("Setting new StartTime : {}".format(ddt0))
@@ -93,7 +93,7 @@ if __name__=="__main__":
     filedir="/".join(args.input.split("/")[:-1])
     brief=filename.split("_")[0]
     print("rm {}".format(args.input))
-    os.system("rm {}".format(args.input))
+    #os.system("rm {}".format(args.input))
     datt=ddt0[:16].replace("\0","")
     os.system("mv temp.nc {}/{}_{}.nc".format(filedir,brief, datt))
   dataset.close()
