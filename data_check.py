@@ -93,7 +93,7 @@ if __name__=="__main__":
     filedir="/".join(args.input.split("/")[:-1])
     brief=filename.split("_")[0]
     print("rm {}".format(args.input))
-    #os.system("rm {}".format(args.input))
+    os.system("rm {}".format(args.input))
     datt=ddt0[:16].replace("\0","")
     os.system("mv temp.nc {}/{}_{}.nc".format(filedir,brief, datt))
   dataset.close()
