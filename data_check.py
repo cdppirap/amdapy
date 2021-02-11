@@ -82,7 +82,7 @@ if __name__=="__main__":
     new_d.sync()
     new_d.close()
     filename=args.input.split("/")[-1]
-    filedir="/".join(args.input.split("/")[:-1]
+    filedir="/".join(args.input.split("/")[:-1])
     brief=filename.split("_")[0]
     os.system("mv temp.nc {}/{}_{}.nc".format(filedir,brief, ddt0[:16]))
   dataset.close()
