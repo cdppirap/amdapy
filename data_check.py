@@ -81,6 +81,8 @@ if __name__=="__main__":
       print("Created variable : {} {} {}".format(v, vdtype, vdims))
       if isinstance(vardata, list):
         print(len(vardata))
+        if len(vardata)==16:
+          vardata=vardata+["\0"]
       else:
         print(vardata.shape)
       new_d.variables[v][:]=vardata
