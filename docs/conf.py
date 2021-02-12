@@ -179,11 +179,5 @@ epub_exclude_files = ['search.html']
 
 # -- Extension configuration -------------------------------------------------
 
-devdir=""
-try:
-    if os.environ['DEVDIR']:
-        devdir=os.environ['DEVDIR']
-except:
-    print("Unable to obtain $DEVDIR form the environement.")
-    exit(-1)
+devdir="/home/aschulz"
 sys.path.insert(0, devdir +"/amdapy")
