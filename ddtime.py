@@ -26,5 +26,6 @@ def dt_to_doy(dt):
 #  @return DDTime.
 def ddtime2(dt):
   doy=dt_to_doy(dt)
-  return "{:04d}{:03d}{:02d}{:02d}{:02d}{}".format(dt.year, doy+1, dt.hour, dt.minute, dt.second, int(dt.microsecond/1000))[:16]+"\0"
+  print("{:04d} {:03d} {:02d} {:02d} {:02d} {}".format(dt.year, doy-1, dt.hour, dt.minute, dt.second, int(dt.microsecond/1000))[:16])
+  return "{:04d}{:03d}{:02d}{:02d}{:02d}{:03d}".format(dt.year, doy-1, dt.hour, dt.minute, dt.second, int(dt.microsecond/1000))[:16]+"\0"
 
