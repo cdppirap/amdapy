@@ -7,7 +7,7 @@
 import numpy as np
 import datetime
 
-from str_utils import *
+from amdapy.str_utils import *
 
 ## PDS ASCII file tags
 PDS_END_TAG="END"

@@ -75,7 +75,7 @@ def str_rem_successive(in_str,c=" "):
 #  @param filename path to file.
 #  @return string.
 def readfile(filename):
-  whttps://webmail.irap.omp.eu/?_task=mail&_action=compose&_id=1836139264602414263ad7fith open(filename,"r") as f:
+  with open(filename,"r") as f:
     d=f.read()
     f.close()
     return d 

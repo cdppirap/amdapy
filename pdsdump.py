@@ -14,8 +14,9 @@ import numpy as np
 import os
 import argparse
 from netCDF4 import Dataset
-from pds import PDSDataset
-from str_utils import str_is_integer
+
+from amdapy.pds import PDSDataset
+from amdapy.str_utils import str_is_integer
 
 ## parse_args
 #

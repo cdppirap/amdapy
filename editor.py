@@ -7,33 +7,36 @@
 import os
 import argparse
 
-import spase
-from spase import NumericalData, Parameter, Contact
+from amdapy.spase import NumericalData, Parameter, Contact
+import amdapy.spase as spase
 
-## Editor class documentation.
-#
-#  Editor class definition.
 class Editor:
-  ## Editor.__init__
-  #
-  #  Editor class initialization.
-  #  @param self object pointer.
+  """This is the base class used for editing SPASE XML resource files. This class is used as a base for 
+  the construction of the NumericalDataEditor, ObservatoryEditor, InstrumentEditor classes.
+  :class: amdapy.editor.Editor
+
+  :param resource: the object that we wish to edit.
+  :type resource: class amdapy.spase.SpaseResource
+  :param ui: user input
+  :type ui: amdapy.editor.Editor.UserInput
+  :param done: flag indicating that editing is done, the main loop is broken
+  :type done: boolean
+  :param actions: list of editing actions.
+  :type actions: list of amdapy.editor.Editor.EditAction
+  :param buffer: debugging buffer.
+  :type buffer: str
+  """
   def __init__(self):
-    ## Editor resource, this is the object that is being edited.
+    """Constructor
+    """
     self.resource=None
-    ## User input is stored in this variable.
     self.ui=None
-    ## Flag indicating that editing is done and the loop may be broken.
     self.done=False
-    ## List of EditAction objects.
     self.actions=[]
-    ## Debugging buffer.
     self.buffer=None
-  ## Editor.start
-  #
-  #  Start the editing loop.
-  #  @param self object pointer.
   def start(self):
+    """Start the editing loop.
+    """
     while not self.editing_done():
       ## print editor content
       self.print_content()
@@ -41,46 +44,41 @@ class Editor:
       self.user_input()
       ## act on user input
       self.apply_input()
-  ## Editor.print_content
-  #
-  #  Print the content to be edited. This function is called at each loop iteration.
-  #  @param self object pointer.
   def print_content(self):
+    """Print the current state of the editor.
+    """
     os.system("clear")
     if not self.buffer is None:
       print("buffer content : {}".format(self.buffer))
     print("content : {}".format(self.resource))
     self.print_manual()
-  ## Editor.editing_done
-  #
-  #  Editing status.
-  #  @param self object pointer.
   def editing_done(self):
+    """Check if editing is done.
+    """
     return self.done
-  ## Editor.user_input
-  #
-  #  Get user input. This function is called at each loop iteration.
-  #  @param self object pointer.
   def user_input(self):
+    """Get user input.
+    """
     self.ui=self.UserInput()
-  ## Editor.apply_input
-  #
-  #  Apply actions to content. This function is called at each loop iteration.
-  #  @param self object pointer.
   def apply_input(self):
+    """Apply editing actions.
+    """
     for action in self.actions:
       if action.matches(self.ui):
         action.apply(self,self.ui)
         return
-  ## Editor.add_action
-  #
-  #  Add an EditingAction.
-  #  @param self object pointer.
-  #  @param par tuple action keys
-  #  @param act func action to perform. Must be a function accepting two arguments : the editor object pointer, the user input.
-  #  @param n_args (int) number of user supplied values.
-  #  @param help (str) help string.
   def add_action(self, par, act, n_args=0, help=None):
+    """Add action to editor.
+
+    :param par: action keys.
+    :type par: type of strings
+    :param act: action to perform, should be a function taking as arguments the current editor and the user input.
+    :type act: callable
+    :param n_args: number of arguments for that action.
+    :type n_args: int
+    :param help: help string.
+    :type help: string
+    """
     self.actions.append(self.EditorAction(par,act,n_args,help))
   ## Editor.set_done
   #
