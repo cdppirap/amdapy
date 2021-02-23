@@ -29,6 +29,16 @@ class DDTime:
     :rtype: str
     """
     return ddtime2(dt)
+  @staticmethod
+  def to_datetime(ddt):
+    year=int(ddt[:4])
+    doy=int(ddt[4:7])
+    hour=int(ddt[7:9])
+    minutes=int(ddt[9:11])
+    seconds=int(ddt[11:13])
+    milli=int(ddt[13:])
+    dt=datetime.datetime(year=year,month=1,day=1, hour=hour, minute=minutes, second=seconds, microsecond=1000*milli) + datetime.timedelta(doy - 1)
+    return dt
 ## dt_to_doy
 #
 #  Convert datetime object to DayOfYear

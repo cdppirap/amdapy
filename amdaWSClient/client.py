@@ -14,6 +14,9 @@ import datetime
 from lxml import etree
 import io
 
+# observatory tree
+from .obstree import ObsTree
+
 class AMDAOutputFormat(Enum):
     """
     Enum : Available output file formats
@@ -493,23 +496,54 @@ class AMDARESTClient:
             return result
         else:
             return None
-
-def get_parameter(param_id, start_date, stop_date, col_names):
+DATE_FORMAT="%Y-%m-%dT%H:%M:%S"
+DATE_FORMATZ="%Y-%m-%dT%H:%M:%S.%f"
+def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
+    start,stop=start_date,stop_date
+    if isinstance(start,datetime.datetime):
+        start=start.strftime(DATE_FORMAT)
+    if isinstance(stop,datetime.datetime):
+        stop=stop.strftime(DATE_FORMAT)
+    print("in get_parameter {}".format(param_id))
     client=AMDARESTClient()
     t=client.auth()
     if t is None:
       print("Error getting authentification token")
       return
-    pfu=client.get_parameter(t,start_date,stop_date,param_id)
+    pfu=client.get_parameter(t,start,stop,param_id)
     a=urlparse(pfu)
     data_file=os.path.basename(a.path)
     urllib.request.urlretrieve(pfu, data_file)
-    return pd.read_csv(data_file, comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=common_date_parser)
+    dparser=date_parser
+    if dparser is None:
+        dparser=common_date_parser
+    print("done")
+    return pd.read_csv(data_file, comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
+    start,stop=start_date,stop_date
+    if isinstance(start,datetime.datetime):
+        start=start.strftime(DATE_FORMAT)
+    if isinstance(stop,datetime.datetime):
+        stop=stop.strftime(DATE_FORMAT)
+    print("in get_dataset : ",type(start),type(stop))
+    client=AMDARESTClient()
+    t=client.auth()
+    if t is None:
+        print("Error getting authentification token")
+        return
+    pfu=client.get_dataset(t,start,stop,dataset_id)
+    a=urlparse(pfu)
+    data_file=os.path.basename(a.path)
+    urllib.request.urlretrieve(pfu, data_file)
+    return pd.read_csv(data_file, comment="#", header=None, sep="\s+")
 def common_date_parser(x):
-    return datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f")
+    if x.endswith("Z"):
+        return datetime.datetime.strptime(x, DATE_FORMATZ)
+    return datetime.datetime.strptime(x, DATE_FORMATZ)
 def get_obs_tree():
     client=AMDARESTClient()
     t=client.auth()
     url=client.get_obs_data_tree()
     parser=etree.XMLParser(recover=True)
-    return etree.parse(io.StringIO(requests.get(url).text), parser=parser)
+    return ObsTree(etree.parse(io.StringIO(requests.get(url).text), parser=parser))
+
