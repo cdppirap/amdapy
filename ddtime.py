@@ -59,3 +59,7 @@ def ddtime2(dt):
   doy=dt_to_doy(dt)
   return "{:04d}{:03d}{:02d}{:02d}{:02d}{:03d}".format(dt.year, doy-1, dt.hour, dt.minute, dt.second, int(dt.microsecond/1000))[:16]+"\0"
 
+def dt_to_seconds(dt):
+  t=datetime.datetime(1970,1,1)
+  return (dt-t).total_seconds()
+
