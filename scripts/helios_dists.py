@@ -479,7 +479,7 @@ if __name__=="__main__":
     destination="/home/aschulz/data_insertions/helios1_edists"
     if not os.path.exists(destination):
         os.system("mkdir -p {}".format(destination))
-    brief="hel1"
+    brief="edist"
 
     date0=datetime(1973,1,1)
     while date0<datetime(2022,1,1):
