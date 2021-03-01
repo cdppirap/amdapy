@@ -487,9 +487,9 @@ if __name__=="__main__":
         try:
             print("electron data")
             data=electron_dists("1",date0,date1)
-        except:
+        except Exception as e:
             date0=date1
-            print("erre getting dat")
+            print("erre getting dat {}".format(e))
             continue
         date0=date1
         if not data is None:
