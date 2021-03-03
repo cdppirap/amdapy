@@ -415,7 +415,8 @@ def get_data_as_ndarray(data):
             az=row["Az"]
             new_r=row.to_numpy()[-8:]
             new_r[0]=new_r[0].timestamp()
-        
+            print("old row : {}".format(row))
+            print("new row : {}".format(new_r))
             if not np.isnan(new_r[0]):
                 ans[i,e_b-1,az-1,:]=new_r
             else:
