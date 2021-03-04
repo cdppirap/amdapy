@@ -1,0 +1,6 @@
+notebooks
+scripts/__pycache__
+*.swp
+*.pyc
+res
+
