@@ -3,15 +3,9 @@
 :file: vidata.py
 :brief: Utlities for managing the Virtual Instrument datafiles
 """
-
-"""Required dimensions
-"""
-required_dimensions=[NetCDFDim("Time",None), NetCDFDim("TimeLength",17)]
-"""Required variables
-"""
-required_variables=[NetCDFVar("Time",np.float64,("Time")), \
-                    NetCDFVar("StartTime", "c", ("TimeLength")), \
-                    NetCDFVar("StopTime", "c", ("TimeLength"))]
+import numpy as np
+import os
+from netCDF4 import Dataset
 
 class NetCDFDim:
   def __init__(self, dimname, size):
@@ -29,6 +23,16 @@ class NetCDFVar:
     dataset.createVariable(self.name, self.datatype, self.dimensions)
     if not self.data is None:
       dataset.variables[self.name][:]=self.data
+
+"""Required dimensions
+"""
+required_dimensions=[NetCDFDim("Time",None), NetCDFDim("TimeLength",17)]
+"""Required variables
+"""
+required_variables=[NetCDFVar("Time",np.float64,("Time")), \
+                    NetCDFVar("StartTime", "c", ("TimeLength")), \
+                    NetCDFVar("StopTime", "c", ("TimeLength"))]
+
 
 class VIDatasetGenerator:
   def __init__(self, path):
@@ -60,4 +64,41 @@ class VIDatasetGenerator:
     stddt=DDTime.from_datetime(arr[-1,0])
     dataset.variables["StopTime"][:]=stddt
     dataset.sync()
+
+class VIDataset:
+  def __init__(self, path):
+    self.path=path
+  @staticmethod
+  def is_netcdf_path(path):
+    return path.endswith(".nc") or path.endswith(".nc.gz")
+  def iter(self):
+    # if path attribute is a netcdf file
+    if self.is_netcdf_path(self.path):
+      yield self
+    else:
+      # go over each netcdf file in the target path
+      for f in os.listdir(self.path):
+        nc_path=os.path.join(self.path,f)
+        if self.is_netcdf_path(nc_path):
+          yield VIDataset(nc_path)
+  def __str__(self):
+    return "VIDataset(path:{}, sampling:{})".format(self.path,self.get_sampling())
+  def get_time(self):
+    t=None
+    if self.path.endswith(".nc"):
+      # load data
+      data=Dataset(self.path,mode="r",format="NETCDF3_CLASSIC")
+      if "Time" in data.variables:
+        t=data.variables["Time"][:]
+      # close dataset
+      data.close()
+    return t
+  def get_sampling(self):
+    t=self.get_time()
+    if not t is None:
+      d=np.diff(t)
+      if d.shape[0]==0:
+        return None
+      return (np.min(d),np.max(d))
+    return None
       
