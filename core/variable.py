@@ -10,63 +10,78 @@ Variables are identified by their name, which should be unique within a dataset,
 following attributes : dtype, shape
 
 We can set or acces the data through the bracket operator.
+
 """
 import numpy as np
 
 class Variable:
-  """Base class for representing Variable
+  """Base class for representing variable objects.
+
+  :param name: name of the variable
+  :type name: str
+  :param dtype: variable datatype, optional
+  :type dtype: numpy.dtype
+  :param shape: shape of the variable, optional
+  :type shape: tuple of ints
+  :param value: variable data, optional
+  :type value: numpy.array
+
   """
-  def __init__(self, name, dtype=None, shape=None, data=None):
-    """Variable initialization
-    :param name: name of the variable.
-    :type name: string
-    :param dtype: dtype of the variable
-    :type dtype: numpy dtype
-    :param shape: shape of the variable
-    :type shape: tuple of ints
+  def __init__(self, name, dtype=None, shape=None, value=None):
+    """Object constructor
     """
     self.name=name
     self.shape=shape
     self.dtype=dtype
-    self.data=data
-    if not self.data is None:
-      self.shape=data.shape
+    self.value=value
+    if not self.value is None:
+      self.shape=value.shape
       self.dtype=dtype
   def __getitem__(self, i):
     """Data getter
+
     :param i: positon
     :type i: int
     :return: value of the item at desired position
+
     """
-    return self.data[i]
+    return self.value[i]
   def __setitem__(self,key, value):
     """Data setter
+
     :param key: key at which to set item
     :type key: position
     :param value: value to set
     :type value: something
+
     """
-    self.data[key]=value
+    self.value[key]=value
   def __delitem__(self,key):
     """Data deletor
+
     :param key: positon
     :type key: position
+
     """
     pass
   def __eq__(self,other):
     """Check equality of two variables
+
     :param other: other Variable object we want to compare with
     :type other: amdapy.core.Variable
+
     """
     return self.name==other.name and \
            self.dtype==other.dtype and \
            self.shape==other.shape and \
-           np.all(self.data == other.data)
+           np.all(self.value== other.value)
 
   def __str__(self):
     """String representation of the object
+    :return: string representation of the current object
+    :rtype: str
     """
-    return "Variable(name:{},dtype:{},shape:{})\n{}".format(self.name, self.dtype, self.shape, self.data)
+    return "Variable(name:{},dtype:{},shape:{})\n{}".format(self.name, self.dtype, self.shape, self.value)
 
 if __name__=="__main__":
   print("Testing the Variable class definition")

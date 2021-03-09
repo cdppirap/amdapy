@@ -1,12 +1,13 @@
-## pdsdump.py script for querying PDS ASCII datasets, and converting them to netCDF.
-#
-#  @file pdsdump.py
-#  @author Alexandre Schulz
-#  @brief Query and convert PDS ASCII files.
-#         Usage : 
-#                  --dump : print contents of the dataset
-#                  --convert2netcdf : convert file to netcdf
-#                  -o, --output : output filename
+"""
+:author: Alexandre Schulz
+:email: alexandre.schulz@irap.omp.eu
+:file: pdsdump.py
+:brief: Use this script to convert a dataset from PDS ASCII format to NetCDF
+
+Usage : --dump : print contents of the dataset
+        --convert2netcdf : convert file to NetCDF
+        -o, --output : output filename
+"""
 
 import sys
 import datetime
@@ -17,11 +18,14 @@ from netCDF4 import Dataset
 
 from amdapy.pds import PDSDataset
 from amdapy.str_utils import str_is_integer
+from amdapy.ddtime import DDTime
 
-## parse_args
-#
-#  Parse command line arguments.
 def parse_args():
+  """Parse command line arguments
+  
+  :return: command line arguments
+  :rtype: argparse.Arguments
+  """
   parser=argparse.ArgumentParser()
   parser.add_argument("input",help="input file",type=str)
 
@@ -35,12 +39,14 @@ def parse_args():
   args=parser.parse_args()
   return args
 
-## parse_namemap_hint
-#
-#  Parse the user supplied column name mapping.
-#  @param hint_str hint string.
-#  @return column name mapping.
 def parse_namemap_hint(hint_str):
+  """Parse the namemap hint
+
+  :param hint_str: string indicating the correspondance between old and new column names
+  :type hint_str: str
+  :return: dictionary mapping new column names with the old column names
+  :rtype: dict
+  """
   if hint_str is None:
     return {}
   a={k.split(":")[0]:k.split(":")[1] for k in hint_str.split(";")}
@@ -48,25 +54,15 @@ def parse_namemap_hint(hint_str):
     if "," in a[k]:
       a[k]=a[k].split(",")
   return a
-## str_is_numeric
-#
-#  Check that string can be converted to integer.
-#  @param in_str string to check.
-#  @return bool.
-def str_is_numeric(in_str):
-  numbers="0123456789"
-  for k in in_str:
-    if not k in numbers:
-      return False
-  return True
 
-## get_column_name_mapping
-#
-#  Get column name mapping.
-#  @param data netcdf data object.
-#  @param hint (default=None) column name hint.
-#  @return column name mapping.
 def get_column_name_mapping(data, hint=None):
+  """Get mapping of new column name to old columns
+
+  :param data: input data object
+  :type data: amdapy.pds.PDSDataset
+  :return: dictionary mapping old dataset column name with onew column names
+  :rtype: dict
+  """
   ans={}
   if hint is None:
     for c in data.column_names():
@@ -78,35 +74,24 @@ def get_column_name_mapping(data, hint=None):
   else:
     hint_map=parse_namemap_hint(hint)
     return hint_map
-## dt_to_doy
-#
-#  Convert datetime object to DayOfYear
-#  @param dt datetime object.
-#  @return int
-def dt_to_doy(dt):
-  return int(dt.strftime("%j"))
-## ddtime
-#
-#  Get DDTime for datetime.
-#  @param dt datetime object.
-#  @return DDTime.
-def ddtime(dt):
-  doy=dt_to_doy(dt)
-  return "{:04d}{:03d}{:02d}{:02d}{:02d}{}".format(dt.year, doy+1, dt.hour, dt.minute, dt.second, int(dt.microsecond/1000))[:16]+"\0"
-## pds_to_netcdf
-#
-#  Convert PDS ASCII file to netcdf.
-#  @param data data object.
-#  @param output (default=None) output file.
-#  @param namemap (default=None) column name mapping.
-#  @param prefix (default=None) apply prefix to output filename.
 def pds_to_netcdf(data, output=None, namemap=None,prefix=None):
+  """Convert a PDS ASCII dataset to NetCDF
+
+  :param data: PDSDataset object handler
+  :type data: amdapy.pds.PDSDataset
+  :param output: output filename, optional
+  :type output: str
+  :param namemap: dictionary mapping new column name to old column names
+  :type namemap: dict
+  :param prefix: prefix to apply to all datafiles, optional
+  :type prefix: str
+  """
   filename="nc_dataset.nc"
   dimensions={"Time":None, "TimeLength":17}
   mapping={}
   start_t,stop_t=data.timespan()
   start_dt,stop_dt=datetime.datetime.utcfromtimestamp(start_t),datetime.datetime.utcfromtimestamp(stop_t)
-  start_str,stop_str=ddtime(start_dt),ddtime(stop_dt)
+  start_str,stop_str=DDTime.from_datetime(start_dt),DDTime.from_datetime(stop_dt)
   variables={"StartTime":("TimeLength","c",start_str),"StopTime":("TimeLength","c",stop_str)}
   if not namemap is None:
     for c in namemap:
@@ -179,7 +164,6 @@ def pds_to_netcdf(data, output=None, namemap=None,prefix=None):
       nc_dataset.variables[var_name][:]=var_data
     nc_dataset.sync()
 
-## if this file is called as script then parse arguments.
 if __name__=="__main__":
   args=parse_args()
   

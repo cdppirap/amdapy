@@ -1,32 +1,34 @@
-## NetCDF file resume generator.
-#
-#  @file viview.py
-#  @author Alexandre Schulz
-#  @brief Script used to generate a PDF file listing the characteristics of the netcdf files given as input.
+"""
+:author: Alexandre Schulz
+:email: alexandre.schulz@irap.omp.eu
+:brief: Script for generating a pdf file with a summary of a dataset.
+
+This script is used to generate a pdf file containing a summary of the data contained in a dataset 
+installed or about to be installed into AMDA. The scripts produces basic plots and tables of the 
+variables contained in the dataset , their datatype, and their shapes. 
+
+"""
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 import os
 
-## VIViewer class documentation.
-#
-#  This class is used to generate the PDF file.
 class VIViewer:
-  ## VIViewer.__init__
-  #
-  #  VIViewer initialization.
-  #  @param self object pointer.
-  #  @filename netcdf file path.
+  """Class for generating the pdf summary of a collection of netCDF files.
+
+  :param filename: path to the dataset files
+  :type filename: str
+  """
   def __init__(self, filename):
+    """Object constructor
+    """
     self.filename=filename
     self.dataset=Dataset(filename,"r",format="NETCDF3_CLASSIC")
     self.tex_content=""
-  ## VIViewer.save
-  #
-  #  Create the PDF file.
-  #  @param self object pointer.
   def save(self):
+    """Save the pdf file
+    """
     output_file="output.pdf"
     print("saving the resume for file : {} to {}".format(self.filename, output_file))
     self.init_tex_content()
@@ -38,44 +40,37 @@ class VIViewer:
     self.save_tex("temp.tex")
     os.system("pdflatex temp.tex")
     os.system("xdg-open temp.pdf")
-  ## VIViewer.save_tex
-  #
-  #  Save the tex content.
-  #  @param self object pointer.
-  #  @param filename name of the tex file.
   def save_tex(self, filename):
+    """Save the Tex content to a temporary file before calling the pdflatex tool.
+    
+    :param filename: filename to the Tex file
+    :type filename: str
+    """
     with open(filename , "w") as f:
       f.write(self.tex_content)
       f.close()
-  ## VIViewer.init_tex_content
-  #
-  #  Initialize the tex content.
-  #  @param self object pointer.
   def init_tex_content(self):
+    """Initialize the Tex content
+    """
     self.tex_content="""\\documentclass[a4paper]{article}
 \\usepackage{graphicx}
 \\begin{document}
                      """
-  ## VIViewer.end_tex_content
-  #
-  #  End the tex document content.
-  #  @param self object pointer.
   def end_tex_content(self):
+    """End the Tex content
+    """
     end_tex="\n\\end{document}"
     self.append_tex_content(end_tex)
-  ## VIViewer.append_tex_content
-  #
-  #  Add content to the tex content.
-  #  @param self object pointer.
-  #  @param content tex content to add to document.
   def append_tex_content(self, content):
+    """Append Tex content to current object
+
+    :param content: Tex content to append
+    :type content: str
+    """
     self.tex_content=self.tex_content+"\n"+content
-  ## VIViewer.tex_variable_table
-  #
-  #  Get tex code for the variable table.
-  #  @param self object pointer.
-  #  @return str tex table.
   def tex_variable_table(self):
+    """Generate a Tex table string containing a description of the variables contained in the dataset
+    """
     a="""
 \\section{Variables}
 \\begin{center}
@@ -88,12 +83,9 @@ class VIViewer:
       a=a+"${}$ & ${}$ & ${}$ \\\\\n".format(var,v.datatype,v.dimensions) 
     a=a+"\\hline\\end{tabular}\\end{center}"
     return a
-  ## VIViewer.tex_dimension_table
-  #
-  #  Get tex code for the dimension table.
-  #  @param self object pointer.
-  #  @return str tex table.
   def tex_dimension_table(self):
+    """Generate a Tex table containing descriptions of the dimensions contained in the dataset.
+    """
     a="""
 \\section{Dimensions}
 \\begin{center}
@@ -104,30 +96,30 @@ class VIViewer:
       a=a+"{} & {} \\\\\n".format(dim,self.dataset.dimensions[dim].size)
     a=a+"\\hline\\end{tabular}\\end{center}"
     return a
-  ## VIViewer.plot_timeseries
-  #
-  #  Plot a timeseries.
-  #  @param self object pointer.
-  #  @param var variable.
   def plot_timeseries(self, varname, var, t, output):
+    """Generate a Timeseries plot
+
+    :param varname: name of the variable to plot
+    :type varname: str
+    :param var: variable data
+    :type var: list type object 
+    :param t: time vector
+    :type t: list type object
+    :param output: path at which to save to figure
+    :type output: str
+    """
     plt.figure()
     plt.title("Variable : {}".format(varname))
     plt.plot(t,var)
     plt.savefig(output)
     plt.close("all")
-  ## VIViewer.get_time_data
-  #
-  #  Get the time data.
-  #  @param self object pointer.
-  #  @return np.array
   def get_time_data(self):
+    """Get the time data for current dataset
+    """
     return np.array(self.dataset.variables["Time"][:])
-  ## VIViewer.tex_plots
-  #
-  #  Get the plots.
-  #  @param self object pointer.
-  #  @return str tex content.
   def tex_plots(self):
+    """Add plots to Tex content
+    """
     plots={}
     time_data=self.get_time_data()
     for v in self.dataset.variables:
@@ -139,6 +131,7 @@ class VIViewer:
         plots[v]="{}.png".format(v)
         a="\\section{Plot $"+v+"$}\n\\begin{center}\n\\includegraphics{"+v+".png }\n\\end{center}"
         self.append_tex_content(a)
+
 if __name__=="__main__":
   nc_filename=sys.argv[1]
   viewer=VIViewer(nc_filename)

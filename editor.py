@@ -1,9 +1,16 @@
-## Script used for editing Spase Resource files.
-#
-#  @file editor.py
-#  @author Alexandre Schulz
-#  @brief SPASE resource editor.
+"""
+:author: Alexandre Schulz
+:email: alexandre.schulz@irap.omp.eu
+:brief: A simple editor for editing SPASE resource files.
 
+Simple command line tool for editing SPASE XML resource files. Allows to perform simple checks such
+that all variable in a NumericalData file are uniquely named and that the corresponding Parameter
+file exists and is well defined.
+
+Can be called like a script for editing specific files. Mostly used for managing the AMDA database
+resource files.
+
+"""
 import os
 import argparse
 
@@ -80,77 +87,77 @@ class Editor:
     :type help: string
     """
     self.actions.append(self.EditorAction(par,act,n_args,help))
-  ## Editor.set_done
-  #
-  #  Set the editing done flag.
-  #  @param self object pointer.
-  #  @param v value.
   def set_done(self, v=True):
+    """Set the editing state to a given value. Default sets the flag to True.
+
+    :param v: value to give to the editing state.
+    :type v: bool, optional
+    """
     self.done=v
-  ## Editor.print_manual
-  #
-  #  Print action manual.
-  #  @param self object pointer.
   def print_manual(self):
+    """Print the usage manual for the editor. Prints a description of all the commands.
+    """
     print("Commands : ")
     for a in self.actions:
       print("\t{}".format(a))
 
-  ## Editor.UserInput class documentation.
-  #
-  #  UserInput class definition.
   class UserInput:
-    ## Editor.UserInput.__init__
-    #
-    #  Initialize the UserInput object.
-    #  @param self object pointer.
+    """Base class for representing the user inputs.
+    """
     def __init__(self):
+      """Object constructor
+      """
       ## User input data
       self.a=input("?>")
       self.a=self.a.split(" ")
-    ## Editor.UserInput.__len__
-    #
-    #  Return UserInput length.
-    #  @param self object pointer.
-    #  @return int.
     def __len__(self):
+      """Get length of the user input.
+
+      :return: length of the user input string.
+      :rtype: int
+      """
       return len(self.a)
-    ## Editor.UserInput.__getitem__
-    #
-    #  UserInput item getter.
-    #  @param self object pointer.
-    #  @param i int index.
-    #  @return str.
     def __getitem__(self,i):
+      """Item getter.
+
+      :param i: item index
+      :type i: int
+      :return: item at position i
+      :rtype: str
+      """
       return self.a[i]
-    ## Editor.UserInput.__str__
-    #
-    #  UserInpur string representation.
-    #  @param self object pointer.
     def __str__(self):
+      """Current object string representation.
+      
+      :return: object string representation.
+      :rtype: str
+      """
       return str(self.a)
-    ## Editor.UserInput.__setitem__
-    #
-    #  UserInput item setter.
-    #  @param self object pointer.
-    #  @param i (int) index.
-    #  @param v value.
     def __setitem__(self,i,v):
+      """Item setter
+
+      :param i: item position
+      :type i: int
+      :param v: value of the item
+      :rtype v: str
+      """
       self.a[i]=v
 
-  ## Editor.EditorAction class documentation.
-  #
-  #  EditorAction class definition.
   class EditorAction:
-    ## Editor.EditorAction.__init__
-    #
-    #  EditorAction initialization.
-    #  @param self object pointer.
-    #  @param par action keys.
-    #  @param act func action function.
-    #  @param help help string.
-    #  @param n_args number of user supplied values.
+    """Class for representing editing actions taken by the user.
+
+    :param par: action keys.
+    :type par: str or list
+    :param act: callback function when this action is executed
+    :type act: callable
+    :param help: help string
+    :type help: str
+    :param n_args: number of argument this action requires
+    :type n_args: int
+    """
     def __init__(self, par, act, n_args=0, help=None):
+      """Object constructor
+      """
       ## Action keys.
       self.par=par
       ## Action function.
@@ -159,21 +166,23 @@ class Editor:
       self.n_args=n_args
       ## Help string.
       self.help=help
-    ## Editor.EditorAction.key_count
-    #
-    #  count action keys.
-    #  @param self object pointer.
     def key_count(self):
+      """Count the number of keys for this actions
+      
+      :return: number of keys for this actions
+      :rtype: int
+      """
       if isinstance(self.par, str):
         return 1
       return len(self.par)
-    ## Editor.EditorAction.matches
-    #
-    #  Check if user input matches the current action object.
-    #  @param self object pointer.
-    #  @param ui user input.
-    #  @return bool.
     def matches(self, ui):
+      """Check that the user input matches the action definition
+
+      :param ui: user input
+      :type ui: amdapy.editor.Editor.UserInput
+      :return: True if the user input is compatible with the action definition, False otherwise.
+      :rtype: bool
+      """
       # check that the number of user inputs matches to action definition
       if len(ui)!=self.key_count()+self.n_args:
         #print("arg len mismatch")
@@ -185,19 +194,21 @@ class Editor:
         if not self.par[i]==ui[i]:
           return False
       return True
-    ## Editor.EditorAction.apply
-    #
-    #  Apply action to content.
-    #  @param self object pointer.
-    #  @param editor_ptr editor object pointer.
-    #  @param ui user input.
     def apply(self,editor_ptr, ui):
+      """Apply the action to the current state of the editor.
+
+      :param editor_ptr: handle of the editor.
+      :type editor_ptr: amdapy.editor.Editor
+      :param ui: user input
+      :type ui: amdapy.editor.Editor.UserInput
+      """
       self.act(editor_ptr, ui)
-    ## Editor.EditorAction.__str__
-    #
-    #  EditorAction string representation.
-    #  @param self object pointer.
     def __str__(self):
+      """Current object string representation.
+      
+      :return: string representation of the current object.
+      :rtype: str
+      """
       if isinstance(self.par, str):
         a="- {}".format(self.par)
       else:
@@ -209,26 +220,24 @@ class Editor:
         a="{} : {}".format(a,self.help)
       return a
 
-## NumericalDataEditor class documentation.
-#
-#  NumericalData Editor class definition.
 class NumericalDataEditor(Editor):
-  ## NumericalDataEditor.__init__
-  #
-  #  NumericalDataEditor initialization.
-  #  @param self object pointer.
-  #  @param filename path to the resource file.
-  #  @param repo_root (default : spase.DEFAULT_REPOSITORY_ROOT) root of the Spase repository.
+  """Subclass of :class:`amdapy.editor.Editor` for editing NumericalData files.
+
+  :param filename: absolute or relative path to the NumericalData file we want to edit.
+  :type filename: str
+  :param repo_root: absolute path to the root of the SPASE resource repository, optional
+  :type repo_root: str
+  """
   def __init__(self,filename,repo_root=spase.DEFAULT_REPOSITORY_ROOT):
+    """Object constructor
+    """
     super(NumericalDataEditor,self).__init__()
     ## Editor resource, this is the object we want to edit.
     self.resource=NumericalData(filename)
     self.add_editor_actions()
-  ## NumericalDataEditor.add_editor_actions
-  #
-  #  Add the right editing actions to current object.
-  #  @param self object pointer.
   def add_editor_actions(self):
+    """Add the editing action to the current editor object.
+    """
     self.add_action("quit", NumericalDataEditor.set_editing_done,help="quit editor" )
    
     self.add_action(("set","id"), NumericalDataEditor.set_resource_id, n_args=1, help="set the ResourceID")
@@ -248,167 +257,201 @@ class NumericalDataEditor(Editor):
     self.add_action(("rm","contact"),NumericalDataEditor.remove_contact, n_args=1,help="remove contact element")
     self.add_action(("set","component","prefix"), NumericalDataEditor.set_component_prefix, n_args=2, help="set the parameters components prefix")
     self.add_action(("set","component","suffix"), NumericalDataEditor.set_component_suffix, n_args=2, help="set the parameters components suffix")
-  ## NumericalDataEditor.set_editing_done (static)
-  #
-  #  Set the state of the editor to done.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_editing_done(editor, ui):
+    """Set the state of the editor to finished
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.set_done(True)
-  ## NumericalDataEditor.set_resource_id (static)
-  #
-  #  Set the resource id value.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_resource_id(editor, ui):
+    """Set resource id of the current file.
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_resource_id(ui[2])
-  ## NumericalDataEditor.set_description (static)
-  #
-  #  Set the description value.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_description(editor, ui):
+    """Set resource description
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_description(ui[2])
-  ## NumericalDataEditor.set_repository (static)
-  #
-  #  Set the repository path.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_repository(editor, ui):
+    """Set repository path
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.repository_root=ui[2]
-  ## NumericalDataEditor.set_measurement_type(static)
-  #
-  #  Set the measurement type.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_measurement_type(editor, ui):
+    """Set resource measurement type
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_measurement_type(ui[2])
-  ## NumericalDataEditor.set_start_date(static)
-  #
-  #  Set the start date.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_start_date(editor, ui):
+    """Set resource start date
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_start_date(ui[2])
-  ## NumericalDataEditor.set_stop_date(static)
-  #
-  #  Set the stop date.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_stop_date(editor, ui):
+    """Set resource stop date
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_stop_date(ui[2])
-  ## NumericalDataEditor.set_release_date(static)
-  #
-  #  Set the release date.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_release_date(editor, ui):
+    """Set resource release date
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_release_date(ui[2])
-  ## NumericalDataEditor.set_cadence_min(static)
-  #
-  #  Set the cadence min.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_cadence_min(editor, ui):
+    """Set resource cadence min value
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_cadence_min(ui[2])
-  ## NumericalDataEditor.set_cadence_max(static)
-  #
-  #  Set the cadence max.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_cadence_max(editor, ui):
+    """Set resource cadence max value
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.set_cadence_max(ui[2])
-  ## NumericalDataEditor.add_parameter(static)
-  #
-  #  Add parameter.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def add_parameter(editor, ui):
+    """Add parameter to current resource file
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     p=Parameter.make_parameter_xmlel(name=ui[2], key=ui[3], size=1)
     editor.resource.add_parameter(p)
-  ## NumericalDataEditor.add_contact(static)
-  #
-  #  Add contact.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def add_contact(editor, ui):
+    """Add contact to current resource file
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     c=Contact.make_contact_xmlel(ui[2],ui[3])
     editor.resource.add_contact(c)
-  ## NumericalDataEditor.remove_parameter(static)
-  #
-  #  Remove parameter.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def remove_parameter(editor, ui):
+    """Remove parameter from current resource file
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.remove_parameter(int(ui[2])-1)
-  ## NumericalDataEditor.remove_contact(static)
-  #
-  #  Remove contact.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def remove_contact(editor, ui):
+    """Remove a contact from current resource.
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     editor.resource.remove_contact(int(ui[2])-1)
-  ## NumericalDataEditor.set_component_prefix
-  #
-  #  Set the component prefix for a certain parameter.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_component_prefix(editor, ui):
+    """Set resource component prefix
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     # parameter index
     param_index=int(ui[3])-1
     param_prefix=ui[4]
     editor.resource.set_component_prefix(param_index, param_prefix)
-  ## NumericalDataEditor.set_component_suffix
-  #
-  #  Set the component suffix
-  #  @param self object pointer.
-  #  @param editor editor pointer.
-  #  @param ui user input.
   @staticmethod
   def set_component_suffix(editor, ui):
+    """Set resource component suffux. Variable components are name <prefix><suffix>.
+
+    :param editor: handle of the current editor object
+    :type editor: amdapy.editor.NumericalDataEditor
+    :param ui: user input
+    :type ui: amdapy.editor.NumericalDataEditor.UserInput
+    """
     param_id=int(ui[3])-1
     suffix=ui[4]
     editor.resource.set_component_suffix(param_id,suffix)
-## InstrumentEditor class documentation.
-#
-#  InstrumentEditor class definition. This class is used for defining Instrument SPASE file editors.
+
 class InstrumentEditor(Editor):
-  ## InstrumentEditor.__init__
-  #
-  #  Editor initialization.
-  #  @param self object pointer.
-  #  @param filename file we want to edit.
-  #  @param repo_root (default: spase.DEFAULT_REPOSITORY_ROOT) root of the Spase repository.
+  """SPASE Instrument resource file editor. Simple command line tool for editing and check
+  SPASE Instrument resource files.
+
+  :param filename: path to the file we want to edit. If file exists it is loaded otherwise a blank file is created
+  :type filename: str
+  :param repo_root: absolute or relative path to the SPASE resource file repository, optional
+  :type repo_root: str
+
+  """
   def __init__(self, filename, repo_root=spase.DEFAULT_REPOSITORY_ROOT):
+    """Object constructor
+    """
     super(InstrumentEditor,self).__init__()
     self.resource=Instrument(filename)
     self.add_editor_actions()
-  ## InstrumentEditor.add_editor_actions
-  #
-  #  Add actions needed for editing an Instrument file.
-  #  @param self object pointer.
   def add_editor_actions(self):
+    """Add an editing action to the editor object
+    """
     pass
 
-## Parse arguments.
-#
-## Parse the command line arguments.
 def parse_args():
+  """Parse command line arguments
+
+  :return: command line arguments
+  :rtype: argparse.Arguments
+  """
   parser=argparse.ArgumentParser()
   parser.add_argument("-n","--numericaldata",help="edit a NumericalData file", type=str, default="")
   parser.add_argument("-i","--instrument",help="edit an Instrument file", type=str, default="")

@@ -1,0 +1,282 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>amdapy.pdsdump &#8212; amdapy 1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for amdapy.pdsdump</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:author: Alexandre Schulz</span>
+<span class="sd">:email: alexandre.schulz@irap.omp.eu</span>
+<span class="sd">:file: pdsdump.py</span>
+<span class="sd">:brief: Use this script to convert a dataset from PDS ASCII format to NetCDF</span>
+
+<span class="sd">Usage : --dump : print contents of the dataset</span>
+<span class="sd">        --convert2netcdf : convert file to NetCDF</span>
+<span class="sd">        -o, --output : output filename</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="k">import</span> <span class="n">Dataset</span>
+
+<span class="kn">from</span> <span class="nn">amdapy.pds</span> <span class="k">import</span> <span class="n">PDSDataset</span>
+<span class="kn">from</span> <span class="nn">amdapy.str_utils</span> <span class="k">import</span> <span class="n">str_is_integer</span>
+<span class="kn">from</span> <span class="nn">amdapy.ddtime</span> <span class="k">import</span> <span class="n">DDTime</span>
+
+<div class="viewcode-block" id="parse_args"><a class="viewcode-back" href="../../amdapy.html#amdapy.pdsdump.parse_args">[docs]</a><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+  <span class="sd">&quot;&quot;&quot;Parse command line arguments</span>
+<span class="sd">  </span>
+<span class="sd">  :return: command line arguments</span>
+<span class="sd">  :rtype: argparse.Arguments</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">parser</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;input file&quot;</span><span class="p">,</span><span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+  <span class="c1"># optional arguments</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--dump&quot;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;dump dataset contents&quot;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span> <span class="s2">&quot;output filename&quot;</span><span class="p">,</span><span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--convert2netcdf&quot;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;convert file to NetCDF format&quot;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--namemap&quot;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;map old column name to new name&quot;</span><span class="p">,</span><span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--separator&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;separation character for the table file&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--brief&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;output file prefix&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
+  <span class="n">args</span><span class="o">=</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+  <span class="k">return</span> <span class="n">args</span></div>
+
+<div class="viewcode-block" id="parse_namemap_hint"><a class="viewcode-back" href="../../amdapy.html#amdapy.pdsdump.parse_namemap_hint">[docs]</a><span class="k">def</span> <span class="nf">parse_namemap_hint</span><span class="p">(</span><span class="n">hint_str</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Parse the namemap hint</span>
+
+<span class="sd">  :param hint_str: string indicating the correspondance between old and new column names</span>
+<span class="sd">  :type hint_str: str</span>
+<span class="sd">  :return: dictionary mapping new column names with the old column names</span>
+<span class="sd">  :rtype: dict</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">if</span> <span class="n">hint_str</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{}</span>
+  <span class="n">a</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span><span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">hint_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)}</span>
+  <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">a</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+      <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">a</span></div>
+
+<div class="viewcode-block" id="get_column_name_mapping"><a class="viewcode-back" href="../../amdapy.html#amdapy.pdsdump.get_column_name_mapping">[docs]</a><span class="k">def</span> <span class="nf">get_column_name_mapping</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">hint</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Get mapping of new column name to old columns</span>
+
+<span class="sd">  :param data: input data object</span>
+<span class="sd">  :type data: amdapy.pds.PDSDataset</span>
+<span class="sd">  :return: dictionary mapping old dataset column name with onew column names</span>
+<span class="sd">  :rtype: dict</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">ans</span><span class="o">=</span><span class="p">{}</span>
+  <span class="k">if</span> <span class="n">hint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">column_names</span><span class="p">():</span>
+      <span class="n">dt</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+      <span class="n">n_name</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span><span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+      <span class="k">if</span> <span class="n">dt</span><span class="o">==</span><span class="s2">&quot;TIME&quot;</span><span class="p">:</span>
+        <span class="n">ans</span><span class="p">[</span><span class="s2">&quot;Time&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">c</span>
+    <span class="k">return</span> <span class="n">ans</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">hint_map</span><span class="o">=</span><span class="n">parse_namemap_hint</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hint_map</span></div>
+<div class="viewcode-block" id="pds_to_netcdf"><a class="viewcode-back" href="../../amdapy.html#amdapy.pdsdump.pds_to_netcdf">[docs]</a><span class="k">def</span> <span class="nf">pds_to_netcdf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">namemap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Convert a PDS ASCII dataset to NetCDF</span>
+
+<span class="sd">  :param data: PDSDataset object handler</span>
+<span class="sd">  :type data: amdapy.pds.PDSDataset</span>
+<span class="sd">  :param output: output filename, optional</span>
+<span class="sd">  :type output: str</span>
+<span class="sd">  :param namemap: dictionary mapping new column name to old column names</span>
+<span class="sd">  :type namemap: dict</span>
+<span class="sd">  :param prefix: prefix to apply to all datafiles, optional</span>
+<span class="sd">  :type prefix: str</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;nc_dataset.nc&quot;</span>
+  <span class="n">dimensions</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Time&quot;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;TimeLength&quot;</span><span class="p">:</span><span class="mi">17</span><span class="p">}</span>
+  <span class="n">mapping</span><span class="o">=</span><span class="p">{}</span>
+  <span class="n">start_t</span><span class="p">,</span><span class="n">stop_t</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">timespan</span><span class="p">()</span>
+  <span class="n">start_dt</span><span class="p">,</span><span class="n">stop_dt</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">start_t</span><span class="p">),</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="n">stop_t</span><span class="p">)</span>
+  <span class="n">start_str</span><span class="p">,</span><span class="n">stop_str</span><span class="o">=</span><span class="n">DDTime</span><span class="o">.</span><span class="n">from_datetime</span><span class="p">(</span><span class="n">start_dt</span><span class="p">),</span><span class="n">DDTime</span><span class="o">.</span><span class="n">from_datetime</span><span class="p">(</span><span class="n">stop_dt</span><span class="p">)</span>
+  <span class="n">variables</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;StartTime&quot;</span><span class="p">:(</span><span class="s2">&quot;TimeLength&quot;</span><span class="p">,</span><span class="s2">&quot;c&quot;</span><span class="p">,</span><span class="n">start_str</span><span class="p">),</span><span class="s2">&quot;StopTime&quot;</span><span class="p">:(</span><span class="s2">&quot;TimeLength&quot;</span><span class="p">,</span><span class="s2">&quot;c&quot;</span><span class="p">,</span><span class="n">stop_str</span><span class="p">)}</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">namemap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">namemap</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">namemap</span><span class="p">[</span><span class="n">c</span><span class="p">],</span><span class="nb">list</span><span class="p">):</span>
+        <span class="n">temp_dim</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">namemap</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+        <span class="c1"># check if the mapping contains a dimension of the right size, if not then create one</span>
+        <span class="n">n_dim</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">dimensions</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">==</span><span class="n">temp_dim</span><span class="p">:</span>
+            <span class="n">n_dim</span><span class="o">=</span><span class="n">d</span>
+        <span class="k">if</span> <span class="n">n_dim</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>
+          <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+          <span class="n">n_dim</span><span class="o">=</span><span class="s2">&quot;dim</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+          <span class="k">while</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
+            <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+            <span class="n">n_dim</span><span class="o">=</span><span class="s2">&quot;dim</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+          <span class="n">dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span><span class="o">=</span><span class="n">temp_dim</span>
+        <span class="n">temp_data</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">or_cc</span> <span class="ow">in</span> <span class="n">namemap</span><span class="p">[</span><span class="n">c</span><span class="p">]:</span>
+          <span class="n">col_name</span><span class="o">=</span><span class="n">or_cc</span>
+          <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">has_column</span><span class="p">(</span><span class="n">or_cc</span><span class="p">))</span> <span class="ow">and</span> <span class="n">str_is_integer</span><span class="p">(</span><span class="n">or_cc</span><span class="p">):</span>
+            <span class="n">col_name</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_name_by_index</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">or_cc</span><span class="p">))</span>
+          <span class="n">col_data</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_data</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+          <span class="n">dt</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+          <span class="n">temp_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_data</span><span class="p">)</span>
+        <span class="n">temp_data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">variables</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="p">((</span><span class="s2">&quot;Time&quot;</span><span class="p">,</span><span class="n">n_dim</span><span class="p">),</span><span class="n">dt</span><span class="p">,</span><span class="n">temp_data</span><span class="p">)</span>
+          
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">orig_colname</span><span class="o">=</span><span class="n">namemap</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">has_column</span><span class="p">(</span><span class="n">orig_colname</span><span class="p">)</span> <span class="ow">and</span> <span class="n">str_is_integer</span><span class="p">(</span><span class="n">orig_colname</span><span class="p">):</span>
+          <span class="n">orig_colname</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_name_by_index</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">orig_colname</span><span class="p">))</span>
+        <span class="n">col_data</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_data</span><span class="p">(</span><span class="n">orig_colname</span><span class="p">)</span>
+        <span class="n">col_shape</span><span class="o">=</span><span class="n">col_data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_shape</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+          <span class="c1"># find the value of the second dimension </span>
+          <span class="n">second_dim_value</span><span class="o">=</span><span class="n">col_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+          <span class="c1"># search for dimension in the netcdf file that has the same value, if none exist then add one</span>
+          <span class="n">n_dim</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+          <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dimensions</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">==</span><span class="n">second_dim_value</span><span class="p">:</span>
+              <span class="n">n_dim</span><span class="o">=</span><span class="n">dim</span>
+          <span class="k">if</span> <span class="n">n_dim</span><span class="o">==</span><span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+            <span class="n">n_dim</span><span class="o">=</span><span class="s2">&quot;dim</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">n_dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
+              <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+              <span class="n">n_dim</span><span class="o">=</span><span class="s2">&quot;dim</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">dimensions</span><span class="p">[</span><span class="n">n_dim</span><span class="p">]</span><span class="o">=</span><span class="n">second_dim_value</span>
+            <span class="n">col_datatype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">orig_colname</span><span class="p">)</span>
+            <span class="n">variables</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="p">((</span><span class="s2">&quot;Time&quot;</span><span class="p">,</span><span class="n">n_dim</span><span class="p">),</span><span class="n">col_datatype</span><span class="p">,</span> <span class="n">col_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">col_datatype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">orig_colname</span><span class="p">)</span>
+          <span class="n">variables</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="n">col_datatype</span><span class="p">,</span><span class="n">col_data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">.nc&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span><span class="n">start_str</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;dataset_</span><span class="si">{}</span><span class="s2">.nc&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">start_str</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">nc_dataset</span><span class="o">=</span><span class="n">Dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;NETCDF3_CLASSIC&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
+      <span class="n">dim_nam</span><span class="p">,</span><span class="n">dim_size</span><span class="o">=</span><span class="n">d</span><span class="p">,</span><span class="n">dimensions</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> 
+      <span class="n">nc_dataset</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="n">dim_nam</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="n">dim_size</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+      <span class="n">var_name</span><span class="o">=</span><span class="n">v</span>
+      <span class="n">var_dim</span><span class="p">,</span> <span class="n">var_dt</span><span class="p">,</span> <span class="n">var_data</span><span class="o">=</span><span class="n">variables</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">var_dt</span> <span class="o">==</span> <span class="s2">&quot;TIME&quot;</span><span class="p">:</span>
+        <span class="n">var_dt</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+      <span class="n">nc_dataset</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">var_name</span><span class="p">,</span> <span class="n">var_dt</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">var_dim</span><span class="p">)</span>
+      <span class="n">nc_dataset</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">var_name</span><span class="p">][:]</span><span class="o">=</span><span class="n">var_data</span>
+    <span class="n">nc_dataset</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+  <span class="n">args</span><span class="o">=</span><span class="n">parse_args</span><span class="p">()</span>
+  
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;arguments are wrong&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;should print help here &quot;</span><span class="p">)</span>
+    <span class="n">exit</span><span class="p">()</span>
+  
+  <span class="n">label_filename</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="o">+</span><span class="s2">&quot;.LBL&quot;</span>
+  <span class="n">data_filename</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="o">+</span><span class="s2">&quot;.TAB&quot;</span>
+  
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">label_filename</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Label file does not exist : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label_filename</span><span class="p">))</span>
+    <span class="n">exit</span><span class="p">()</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">data_filename</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data file does not exist : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_filename</span><span class="p">))</span>
+
+  <span class="c1"># initialize dataset</span>
+  <span class="n">data</span><span class="o">=</span><span class="n">PDSDataset</span><span class="p">(</span><span class="n">label_filename</span><span class="o">=</span><span class="n">label_filename</span><span class="p">,</span> <span class="n">data_filename</span><span class="o">=</span><span class="n">data_filename</span><span class="p">,</span> <span class="n">table_sep</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">separator</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dump</span><span class="p">:</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+    <span class="n">exit</span><span class="p">()</span>
+
+  <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">convert2netcdf</span><span class="p">:</span>
+    <span class="n">output_filename</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="o">+</span><span class="s2">&quot;.nc&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;converting file to netcdf : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">output_filename</span><span class="p">))</span>
+    <span class="c1"># map old column name to new names if they are given</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">namemap</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">user defined column name mapping&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">default name mapping&quot;</span><span class="p">)</span>
+    <span class="n">namemap</span><span class="o">=</span><span class="n">get_column_name_mapping</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">hint</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">namemap</span><span class="p">)</span>
+    <span class="n">pds_to_netcdf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output_filename</span><span class="p">,</span><span class="n">namemap</span><span class="o">=</span><span class="n">namemap</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">brief</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Alexandre Schulz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

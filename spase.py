@@ -1,9 +1,9 @@
-## SPASE management
-#
-#  @package amdapy
-#  @file spase.py
-#  @author Alexandre Schulz
-#  @brief SPASE XML file management
+"""
+:author: Alexandre Schulz
+:email: alexandre.schulz@irap.omp.eu
+:file: spase.py
+:brief: Classes and functions for manipulating SPASE XML resource files
+"""
 
 import os
 import subprocess
@@ -23,11 +23,19 @@ SPASE_ADDR_PREFIX="spase://"
 DATETIME_FORMAT="%Y-%m-%dT%H:%M:%SZ"
 ## Color mapping.
 cmap={"g":Fore.GREEN, "r":Fore.RED, "b":Fore.BLUE}
-## Color string.
-#
-#  Add coloring tags to text.
+
 def strcol(s,c):
+  """Format a string to print in color
+
+  :param s: string to print
+  :type s: str
+  :param c: color
+  :type c: colorama.Style.Color
+  :return: colored string
+  :rtype: str
+  """
   return cmap[c]+s+Style.RESET_ALL
+
 ## SPASE XML tags
 #
 #  Enumeration of SPASE XML tags.
@@ -62,25 +70,29 @@ PERSON_TYPE="Person"
 #
 #  SPASE resource identification representation.
 class SpaseAddr(str):
-  ## SpaseAddr.__init__(self,v)
-  #
-  #  SpaseAddr object initialization.
-  #  @param self object pointer.
-  #  @param v value.
+  """SPASE resource address container. Contains the address of a SPASE resource with respect to its root
+  directory.
+
+  :param v: value
+  :type v: str
+  """
   def __init__(self,v):
     super(SpaseAddr,self).__init__()
     self=v
-  ## SpaseAddr.is_valid()
-  #
-  #  Check that the current object is a valid SPASE address.
-  #  @param self object pointer.
-  #  @return bool.
   def is_valid(self):
+    """Check if the current object is a valid address
+    :return: True is the current object is a valid SPASE address, False otherwise
+    :rtype: bool
+    """
     return self.startswith(SPASE_ADDR_PREFIX)
-  ## SpaseAddr.__str__(repository_root=None)
-  #
-  #  SpaseAddr .
   def __str__(self,repository_root=None):
+    """String representation of the current object
+    
+    :param repository_root: path to the root of the SPASE repository, optional
+    :type repository_root: str
+    :return: string representation of the current object
+    :rtype: str
+    """
     if repository_root is None:
       return self
     ## check if the associated path exists of not
@@ -88,15 +100,12 @@ class SpaseAddr(str):
       return strcol(self, "g")
     return strcol(self, "r")
 
-## SpaseResource documentation.
-#
-#  SPASE XML file representation. Use this class to create, edit and save SPASE XML files.
 class SpaseResource:
-  ## SpaseResource.__init__ initialization.
-  #
-  #  Initialize the SpaseResource object.
-  #  @param self the object pointer.
-  #  @param filename absolute path to the XML file.
+  """Base class for representing SPASE resources
+
+  :param filename: path to the resource file
+  :type filename: str
+  """
   def __init__(self, filename):
     ## path to XML file.
     self.filename=filename               
@@ -108,76 +117,81 @@ class SpaseResource:
     if None in self.nsmap:
       self.nsmap["abc"]=self.nsmap[None]
       del self.nsmap[None]
-  ## SpaseResource.is_spase_resource
-  #
-  #  Check if the current object contains an xml tree that is compatible 
-  #  with the SPASE resource scheme.
-  #  @param self object pointer.
-  #  @return bool True is the root element of the tree is tagged Spase, False otherwise
   def is_spase_resource(self):
+    """Check that the current object is compatible with the SPASE XML scheme
+
+    :return: True if current object is a valid spase resource, False otherwise
+    :rtype: bool
+    """
     return self.tree.getroot().tag.endswith(SPASE_TAG)
-  ## SpaseResource validity check.
-  #
-  #  Check whether the object is a valid SpaseResource object. The object is valid if
-  #  the tree attribute is a XML tree object with a root element tagged "Spase"
-  #  @param self the object pointer.
   def valid(self):
+    """Check that the current object is valid
+
+    :return: True if the current object is a valid SPASE resource object
+    :rtype: bool
+    """
     root_el=self.tree.xpath("/abc:{}".format(SPASE_TAG),namespaces=self.nsmap)
     return len(root_el)!=0
-  ## SpaseResource type getter.
-  #
-  #  Returns the type of SPASE object the current instance represents. Return None on error.
-  #  @param self the object pointer
   def resource_type(self):
+    """Get resource type
+
+    :return: Resource type
+    :rtype: str
+    """
     tags=[NUMERICALDATA_TAG,INSTRUMENT_TAG,OBSERVATORY_TAG,PERSON_TAG]
     for t in tags:
       ts=self.tree.xpath("/abc:{}/abc:{}".format(SPASE_TAG,t),namespaces=self.nsmap)
       if len(ts)!=0:
         return t
     return None
-  ## SpaseResource id getter.
-  #
-  #  Returns the resource id of the SpaseResource object. Returns None on error.
-  #  @param self the object pointer
   def resource_id(self):
+    """Get resource id
+
+    :return: resource id
+    :rtype: str
+    """
     return self.tree.xpath("/abc:{}/*/abc:{}".format(SPASE_TAG,RESOURCEID_TAG), namespaces=self.nsmap)[0].text
-  ## SpaseResource id setter.
-  #
-  #  Set the current resource ResourceID tag value.
-  #  @param self object pointer.
-  #  @param rid str new resource id value.
   def set_resource_id(self, rid):
+    """Set resource id
+
+    :param rid: resource id value
+    :type rid: str
+    """
     self.tree.xpath("/abc:{}/*/abc:{}".format(SPASE_TAG,RESOURCEID_TAG), namespaces=self.nsmap)[0].text=rid
-  ## SpaseResource write.
-  #
-  #  Write the SpaseResource to a file.
-  #  @param self the object pointer.
-  #  @param filename the absolute target filename.
   def write(self, filename):
+    """Save resource to file
+    
+    :param filename: filename
+    :type filename: str
+    """
     self.tree.write(filename, xml_declaration=True, encoding="utf-8", pretty_print=True)
-  ## SpaseResource Check if resource is of target type.
-  #
-  #  @param self object pointer
-  #  @param rtype resource type (str type object)
   def is_type(self, rtype):
+    """Check if object is of type :data:`rtype`
+
+    :param rtype: desired type
+    :type rtype: str
+    :return: True if current object is of type :data:`rtype`, False otherwise
+    :rtype: bool
+    """
     p=self.tree.xpath("/abc:{}/abc:{}".format(SPASE_TAG,rtype),namespaces=self.nsmap)
     if len(p):
       return True
     return False
-  ## SpaseResource : Get expected filename based on resource id.
-  #
-  #  Get the expected filename path for current resource id.
-  #  @param self object pointer.
-  #  @param repository_root (default DEFAULT_REPOSITORY_ROOT) the root of the Spase repository.
-  #  @return str expected path.
   def expected_filename(self, repository_root=DEFAULT_REPOSITORY_ROOT):
+    """Get the expected filename base on current objects resource id and repository root
+    
+    :param repository_root: path to the root directory of the SPASE resource repository, optional
+    :type repository_root: str
+    :return: expected filename
+    :rtype: str
+    """
     return SpaseManager.resource_id_to_path(self.resource_id(), repository_root)
-  ## SpaseResource iterate dependencies.
-  #
-  #  Iterate over dependencies of the current object.
-  #  @param self object pointer.
-  #  @return SpaseAddr object generator.
   def iter_dependency(self):
+    """Iterate over dependencies of the current object
+
+    :return: SPASE address object 
+    :rtype: amdapy.spase.SpaseAddr
+    """
     res_id=self.resource_id()
     for e in self.tree.iter():
       if isinstance(e, etree._Element) and (not isinstance(e, etree._Comment)):
@@ -189,102 +203,109 @@ class SpaseResource:
               addr=SpaseAddr(e.text)
               if addr.is_valid():
                 yield addr
-  ## SpaseResource iterate contacts.
-  #
-  #  Iterate over contact elements.
-  #  @param self object pointe.
-  #  @return Contact object generator.
   def iter_contact(self):
+    """Iterate over contact information
+
+    :return: Contact information
+    :rtype: amdapy.spase.SpaseContact
+    """
     for e in self.tree.iter():
       if e.tag.endswith(CONTACT_TAG):
         yield Contact(e)
-  ## SpaseResource.dirty_find
-  #
-  #  find tag by name. Dirty way.
-  #  @param self object pointer.
-  #  @param tag tag we are looking for.
-  #  @return etree.Element
   def dirty_find(self, tag):
+    """Temporary : find tag , ugly, ugly, ugly
+
+    :param tag: tag we are looking for
+    :type tag: str
+    :return: First element with correponding tag
+    :rtype: lxml.etree._Element
+    """
     for e in self.tree.iter():
       if e.tag.endswith(tag):
         return e
 
-## NumericalData class documentation.
-#
-#  Used for representing NumericalData files and their contents.
 class NumericalData(SpaseResource):
-  ## NumericalData initialization.
-  #
-  #  @param self object pointer.
-  #  @param file path to the resource file.
+  """SPASE NumericalData interface class
+
+  :param file: path to the resource file
+  :type file: str
+  """
   def __init__(self, file):
+    """Object constructor
+    """
     super(NumericalData,self).__init__(file)
-  ## NumericalData Iterate over parameters.
-  #
-  #  Yields Parameter object for each parameter defined in the numerical data file.
-  #  @param self pointer to object.
   def iter_parameter(self):
+    """Iterate over Parameter objects
+
+    :return: Parameter objects defined in the current NumericalData file
+    :rtype: amdapy.spase.Parameter
+    """
     for p in self.tree.iter():
       if isinstance(p,etree._Element) and (not isinstance(p,etree._Comment)):
         if p.tag.endswith("Parameter"):
           yield Parameter(p)
-  ## NumericalData Iterate over contacts.
-  #
-  #  Yields Contact object for each parameter defined in the numerical data file.
-  #  @param self pointer to object.
   def iter_contact(self):
+    """Iterate over contact information
+
+    :return: contact information in the current NumericalData file
+    :rtype: amdapy.spase.Contact
+    """
     for p in self.tree.iter():
       if isinstance(p,etree._Element) and (not isinstance(p,etree._Comment)):
         if p.tag.endswith("Contact"):
           yield Contact(p)
-  ## NumericalData.parameter_count Count parameters.
-  #
-  #  Count the number of parameters contained in the current numerical data file.
-  #  @param self pointer to object.
   def parameter_count(self):
+    """Count number of parameters
+
+    :return: number of parameters defined in the current NumericalData file
+    :rtype: int
+    """
     return len([p for p in self.iter_parameter()])
-  ## NumericalData.contact_count Count contacts.
-  #
-  #  Count the number of contact objects contained in the current numerical data file.
-  #  @param self pointer to object.
   def contact_count(self):
+    """Count contacts
+
+    :return: number of contact object in the current object
+    :rtype: int
+    """
     return len([p for p in self.iter_contact()])
-  ## NumericalData Check if current numerical data file contains a parameter.
-  #
-  #  Returns true if current file contains a parameter of name "name".
-  #  @param self object pointer.
-  #  @param param_id id of the desired parameter.
   def contains_parameter(self,param_id):
+    """Check if the parameter :data:`param_id` exists
+
+    :return: True if the current object contains the desired parameter, False otherwise
+    :rtype: bool
+    """
     for p in self.iter_parameter():
       if param_id==p.get_id():
         return True
     return False
-  ## NumericalData Check current object resource id.
-  #
-  #  Check that the current resource id is valid.
-  #  @param self object pointer.
-  #  @param rid (optional) check the input id.
-  #  @return bool True is the resource id is a valid SpaseAddr format. False otherwise.
   def check_resource_id(self, rid=None):
+    """Check the validity of a resource id
+
+    :param rid: resource id value, optional, if None then check current objects resource id
+    :type rid: str
+    :return: True if :data:`rid` is a valid resource id
+    :rtype: bool
+    """
     if rid is None:
       return self.resource_id().startswith(SPASE_ADDR_PREFIX)
     return rid.startswith(SPASE_ADDR_PREFIX)
-  ## NumericalData Check filename.
-  #
-  #  Filename must match the resource id.
-  #  @param self object pointer.
-  #  @param repository_root (default: DEFAULT_REPOSITORY_ROOT) root of the Spase repository.
-  #  @return bool True if expected filename matches current filename, otherwise False.
   def check_filename(self, repository_root=DEFAULT_REPOSITORY_ROOT):
+    """Check that the filename and the resource id correspond
+
+    :param repository_root: root of the SPASE resource repository
+    :type repository_root: str
+    :return: check that the resource id and the current file path correspond
+    :rtype: bool
+    """
     # get the expected path of the resource with current resource id.
     expected_path=self.expected_filename(repository_root)
     return expected_path==self.filename
-  ## NumericalData remove parameter.
-  #
-  #  Remove a parameter element from the current object.
-  #  @param self object pointer.
-  #  @param i parameter index.
   def remove_parameter(self, i):
+    """Remove parameter
+
+    :param i: index of the parameter
+    :type i: int
+    """
     if i<0:
       return
     if i>=self.parameter_count():
@@ -292,49 +313,54 @@ class NumericalData(SpaseResource):
     el=self.tree.xpath("/abc:Spase/abc:NumericalData", namespaces=self.nsmap)
     if len(el)==1:
       el[0].remove(self.get_parameter(i).root)
-  ## NumericalData parameter_str()
-  #
-  #  get the string representation of the parameters.
-  #  @param self object pointer.
-  #  @param n_indent (int) = 0 number of indentation characters to insert.
-  #  @param repository_root (default: DEFAULT_REPOSITORY_ROOT) root of the Spase repository.
-  #  @return str parameter string representation.
   def parameter_str(self, n_indent=0, repository_root=None):
+    """Get summary of parameters as string
+
+    :param n_indent: number of indentation characters to insert at each line, optional
+    :type n_indent: int
+    :param repository_root: root directory of the SPASE resource repository
+    :type repository_root: str
+    :return: string representation of the current objects parameters
+    :rtype: str
+    """
     a="{}Parameters :\n".format(n_indent*"\t")
     c=1
     for p in self.iter_parameter():
       a="{}{}{}. {}\n".format(a,"\t"*(n_indent+1),c,p.__str__())
       c=c+1
     return a
-  ## NumericalData contact_str(n_indent, repository_root=None)
-  #
-  #  get the string representation of this objects contacts.
-  #  @param self object pointer.
-  #  @param n_indent number of indentation characters to insert every line.
-  #  @param repository_root root of the Spase repository.
-  #  @return str.
   def contact_str(self, n_indent=0, repository_root=None):
+    """Get contact information string
+
+    :param n_indent: number of indentation characters to insert at each line, optional, default is 0
+    :type n_indent: int
+    :param repository_root: root directory of the SPASE repository, optional
+    :type repository_root: str
+    :return: contact information string
+    :rtype: str
+    """
     a="{}Contact :\n".format(n_indent*"\t")
     c=1
     for p in self.iter_contact():
       a="{}{}{}. {}\n".format(a,"\t"*(n_indent+1),c,p.__str__(0,repository_root))
       c=c+1
     return a
-  ## NumericalData.add_parameter
-  #
-  #  Add parameter to current object.
-  #  @param self object pointer.
-  #  @param param etree.Element object representing the parameter.
   def add_parameter(self, param):
+    """Add parameter to the current object
+
+    :param param: parameter object
+    :type param: amdapy.spase.Parameter
+    """
     e=self.tree.xpath("/abc:Spase/abc:NumericalData", namespaces=self.nsmap)
     e[0].append(param)
-  ## NumericalData.__str__ str representation.
-  #
-  #  Represent the current object as a string.
-  #  @param self pointer to object
-  #  @param repository_root (default: DEFAULT_REPOSITORY_ROOT) root of the Spase repository.
-  #  @return str NumericalData string representation.
   def __str__(self, repository_root=DEFAULT_REPOSITORY_ROOT):
+    """NumericalData object string representation
+
+    :param repository_root: root of the SPASE resource repository, optional
+    :type repository_root: str
+    :return: string representation of the NumericalData object
+    :rtype: str
+    """
     if self.check_resource_id():
       res_id_col=Fore.GREEN
     else:
@@ -383,13 +409,14 @@ class NumericalData(SpaseResource):
     for d in self.iter_dependency():
       print(d)
     return a
-  ## NumericalData.get_parameter get parmeter by index
-  #
-  #  Returns a Parameter object at index i.
-  #  @param self object pointer.
-  #  @param i index.
-  #  @return Parameter
   def get_parameter(self, i):
+    """Get parameter at position :data:`i`
+
+    :param i: parameter index
+    :type i: int
+    :return: None if index out of bounds, Parameter object otherwise
+    :rtype: amdapy.spase.Parameter
+    """
     if i>=self.parameter_count():
       return None
     c=0
@@ -397,13 +424,14 @@ class NumericalData(SpaseResource):
       if c==i:
         return p
       c=c+1
-  ## NumericalData get contact by index
-  #
-  #  Returns a Contact object at index i.
-  #  @param self object pointer.
-  #  @param i index.
-  #  @return Contact
   def get_contact(self, i):
+    """Get contact element
+
+    :param i: index of the contact
+    :type i: int
+    :return: None if :data:`i` is out of bounds, Contact information otherwise
+    :rtype: amdapy.spase.Contact
+    """
     if i>=self.contact_count():
       return None
     c=0
@@ -411,30 +439,31 @@ class NumericalData(SpaseResource):
       if c==i:
         return p
       c=c+1
-  ## NumericalData Get InstrumentID.
-  #
-  #  Get instrument id corresponding to the current numerical data file.
-  #  @param self object pointer.
-  #  @return str InstrumentID tag text. None on failure.
   def get_instrument_id(self):
+    """Get instrument id curresponding to the current resource
+
+    :return: instrument resource id
+    :rtype: str
+    """
     el=self.tree.xpath("/abc:{}/abc:{}/abc:{}".format(SPASE_TAG,NUMERICALDATA_TAG,INSTRUMENTID_TAG),namespaces=self.nsmap)
     if len(el)==0:
       return SpaseAddr("")
     if len(el)>1:
       print("More then one instrument id tag found")
     return SpaseAddr(el[0].text)
-  ## NumericalData Get ObservatoryID.
-  #
-  #  Get observatory id corresponding to the current Numerical Data file. unused because the mission is pointed to by the instrument resource.
-  #  @return None because not used for now.
   def get_mission_id(self):
+    """Get mission id corresponding to the current resource
+
+    :return: mission resource id
+    :rtype: str
+    """
     return None
-  ## NumericalData.add_contact
-  #
-  #  Add a contact to the current object.
-  #  @param self object pointer.
-  #  @param contact_el contact etree.Element object.
   def add_contact(self, contact_el):
+    """Add contact to current resource
+
+    :param contact_el: contact information
+    :type contact_el: amdapy.spase.Contact
+    """
     # find the ResourceHeader element
     rh=None
     for e in self.tree.iter():
@@ -443,12 +472,14 @@ class NumericalData(SpaseResource):
     if e is None:
       return
     rh.append(contact_el)
-  ## NumericalData.remove_contact
-  #
-  #  Remove contact from current object.
-  #  @param self object pointer.
-  #  @param i int.
   def remove_contact(self, i):
+    """Remove contact information from current resource
+
+    :param i: contact information element index
+    :type i: int
+    :return: None on failure
+    :rtype: None
+    """
     if i<0:
       return
     if i>=self.contact_count():
@@ -459,204 +490,205 @@ class NumericalData(SpaseResource):
         el=e
     if not el is None:
       el.remove(self.get_contact(i).root)
-  ## NumericalData.get_description
-  #
-  #  Get the description for the current object
-  #  @param self object pointer.
-  #  @return str, None if not set
   def get_description(self):
+    """Get description of current object
+
+    :return: object description string
+    :rtype: str
+    """
     desc_el=self.dirty_find("Description")
     return desc_el.text
-  ## NumericalData.set_description
-  #
-  #  Set the description for current element.
-  #  @param self object pointer.
-  #  @param description str.
   def set_description(self, description):
+    """Set description of current object
+
+    :param description: object description
+    :type description: str
+    """
     desc_el=self.dirty_find("Description")
     desc_el.text=description
-  ## NumericalData.get_measurement_type
-  #
-  #  Get the MeasurementType value of this object.
-  #  @param self object pointer.
-  #  @return str.
   def get_measurement_type(self):
+    """Get Measurement type of current object
+
+    :return: object MeasurementType value
+    :rtype: str
+    """
     return self.dirty_find("MeasurementType").text
-  ## NumericalData.set_measurement_type
-  #
-  #  Set the MeasurementType value for this file.
-  #  @param self object pointer.
-  #  @param value str value.
   def set_measurement_type(self, value):
+    """Set MeasurementType value of the current object
+
+    :param value: value
+    :type value: str
+    """
     el=self.dirty_find("MeasurementType")
     el.text=value
-  ## NumericalData.get_start_date
-  #
-  #  Get current file StartDate tag.
-  #  @param self object object.
-  #  @return datetime.
   def get_start_date(self):
+    """Get current object start date
+
+    :return: current object start date
+    :rtype: datetime.datetime
+    """
     sd_el=self.dirty_find("StartDate")
     if sd_el is None:
       return datetime.datetime()
     return datetime.datetime.strptime(sd_el.text, DATETIME_FORMAT)
-  ## NumericalData.set_start_date
-  #
-  #  Set the current object start date
-  #  @param self object pointer.
-  #  @param dt datetime object.
   def set_start_date(self, dt):
+    """Set current object start date
+
+    :param dt: start date
+    :type dt: datetime.datetime
+    """
     sd_el=self.dirty_find("StartDate")
     if isinstance(dt,datetime.datetime):
       sd_el.text=dt.strftime(DATETIME_FORMAT)
     else:
       sd_el.text=dt
-  ## NumericalData.get_stop_date
-  #
-  #  Get current file StopDate tag.
-  #  @param self object object.
-  #  @return datetime.
   def get_stop_date(self):
+    """Get current object stop date
+
+    :return: stop
+    :rtype: datetime.datetime
+    """
     sd_el=self.dirty_find("StopDate")
     if sd_el is None:
       return datetime.datetime()
     return datetime.datetime.strptime(sd_el.text, DATETIME_FORMAT)
-  ## NumericalData.set_stop_date
-  #
-  #  Set the current object stop date
-  #  @param self object pointer.
-  #  @param dt datetime object.
   def set_stop_date(self, dt):
+    """Set current object stop date
+
+    :param dt: stop date
+    :type dt: datetime.datetime
+    """
     sd_el=self.dirty_find("StopDate")
     if isinstance(dt,datetime.datetime):
       sd_el.text=dt.strftime(DATETIME_FORMAT)
     else:
       sd_el.text=dt
-  ## NumericalData.get_release_date
-  #
-  #  Get current file ReleaseDate tag.
-  #  @param self object object.
-  #  @return datetime.
   def get_release_date(self):
+    """Get current object release date
+
+    :return: release date
+    :rtype: datetime.datetime
+    """
     sd_el=self.dirty_find("ReleaseDate")
     if sd_el is None:
       return datetime.datetime()
     return datetime.datetime.strptime(sd_el.text, DATETIME_FORMAT)
-  ## NumericalData.set_release_date
-  #
-  #  Set the current object release date
-  #  @param self object pointer.
-  #  @param dt datetime object.
   def set_release_date(self, dt):
+    """Set current object release date
+
+    :param dt: release date
+    :type dt: datetime.datetime
+    """
     sd_el=self.dirty_find("ReleaseDate")
     if isinstance(dt,datetime.datetime):
       sd_el.text=dt.strftime(DATETIME_FORMAT)
     else:
       sd_el.text=dt
-  ## NumericalData.get_cadence_min
-  #
-  #  Get current file CadenceMin tag.
-  #  @param self object object.
-  #  @return str
   def get_cadence_min(self):
+    """Get cadence min value
+
+    :return: cadence min value
+    :rtype: str
+    """
     sd_el=self.dirty_find("CadenceMin")
     if sd_el is None:
       return None
     return sd_el.text
-  ## NumericalData.set_cadence_min
-  #
-  #  Set the current object cadence min.
-  #  @param self object pointer.
-  #  @param cadence str.
   def set_cadence_min(self, cadence):
+    """Set current object min cadence value
+
+    :param cadence: cadence minimum value
+    :type cadence: str
+    """
     sd_el=self.dirty_find("CadenceMin")
     sd_el.text=cadence
-  ## NumericalData.get_cadence_max
-  #
-  #  Get current file CadenceMax tag.
-  #  @param self object object.
-  #  @return str
   def get_cadence_max(self):
+    """Get cadence maximum value
+
+    :return: cadence max
+    :rtype: str
+    """
     sd_el=self.dirty_find("CadenceMax")
     if sd_el is None:
       return None
     return sd_el.text
-  ## NumericalData.set_cadence_max
-  #
-  #  Set the current object cadence min.
-  #  @param self object pointer.
-  #  @param cadence str.
   def set_cadence_max(self, cadence):
+    """Set cadence maximum value
+
+    :param cadence: maximum cadence value
+    :type cadence: str
+    """
     sd_el=self.dirty_find("CadenceMax")
     sd_el.text=cadence
-  ## NumericalData.set_component_prefix
-  #
-  #  Set the component name prefix for a given parameter.
-  #  @param self object pointer.
-  #  @param i parameter index.
-  #  @param prefix prefix to apply to component names.
   def set_component_prefix(self, i, prefix):
+    """Set component prefix 
+
+    :param i; index of the parameter
+    :type i: int
+    :param prefix: prefix value
+    :type prefix: str
+    """
     # get the ith Parameter object
     parameter=self.get_parameter(i)
     if not parameter is None:
       if parameter.get_size()>1:
         parameter.set_component_prefix(prefix)
-  ## NumericalData.set_component_suffix
-  #
-  #  Set the parameter component name suffix for one of the parameters.
-  #  @param self object pointer.
-  #  @param param_id (int) index of the parameter we want to edit.
-  #  @param suffix suffix scheme.
   def set_component_suffix(self, param_id, suffix):
+    """Set component suffix
+
+    :param param_id: parameter id
+    :type param_id: str
+    :param suffix: suffix value
+    :type suffix: str
+    """
     # get the ith parameter
     parameter=self.get_parameter(param_id)
     if not parameter is None:
       if parameter.get_size()>1:
         parameter.set_component_suffix(suffix)
     
-## Instrument class documentation.  
-#
-#  Used for representing Instrument files and their contents.
 class Instrument(SpaseResource):
-  ## Instrument initialization.
-  #
-  #  @param self object pointer.
-  #  @param file path to resource file.
+  """Class for representing and modifying SPASE Instrument resources
+
+  :param file: path to the resource file
+  :type file: str
+  """
   def __init__(self, file):
+    """Object constructor
+    """
     super(Instrument,self).__init__(file)
 
-## Observatory class documentation.
-#
-#  Used for representing Observatory files and their contents.
 class Observatory(SpaseResource):
-  ## Observatory initialization.
-  #
-  #  @param self object pointer.
-  #  @param file path to resource file.
+  """Class for representing and modifying SPASE Observatory resources
+
+  :param file: path to the resource file
+  :type file: str
+  """
   def __init__(self, file):
+    """Object constructor
+    """
     super(Observatory,self).__init__(file)
 
-## Person class documentation.
-#
-#  Used for representing Person files and their contents.
 class Person(SpaseResource):
-  ## Person initialization.
-  #
-  #  @param self object pointer.
-  #  @param file path to the resource file.
+  """Class for representing SPASE Person resource
+
+  :param file: path to the resource file
+  :type file: str
+  """
   def __init__(self, file):
+    """Object constructor
+    """
     super(Person,self).__init__(file)
 
-## XMLElement class documentation.
-#
-#  Class used for representing a XML element.
 class XMLElement:
-  ## XMLElement initialization.
-  #
-  #  XML element initialization.
-  #  @param self object pointer.
-  #  @param element root element of the current object.
+  """Class for representing an XML element
+
+  :param element: root element of the object
+  :type element: lxml.etree._Element
+  """
   def __init__(self, element):
+    """Object constructor
+    """
     ## root XML element.
     self.root=element
     ## XML namespace mapping.
@@ -664,13 +696,14 @@ class XMLElement:
     if None in self.nsmap:
       self.nsmap["abc"]=self.nsmap[None]
       del self.nsmap[None]
-  ## XMLElement find element.
-  #
-  #  Find element of current object.
-  #  @param self object pointer.
-  #  @param tag tag we are looking for.
-  #  @return xml element object.
   def find(self, tag):
+    """Find element by tag
+
+    :param tag: tag of the desired element
+    :type tag: str
+    :return: element object if found, None otherwise
+    :rtype: lxml.etree._Element or None
+    """
     for e in self.root.iter():
       if isinstance(e,etree._Comment):
         continue
@@ -678,16 +711,15 @@ class XMLElement:
         return e
     return self.root.find("abc:{}".format(tag),namespaces=self.nsmap)
 
-## Element class documentation.
-#
-#  This class represents Element tags in multidimensional timeseries Spase parameters.
 class Element(XMLElement):
-  ## Element.__init__ Element initialization
-  #
-  #  Initialize the Element object.
-  #  @param self object pointer.
-  #  @param el xml element
+  """Class represent Element tags in multidimensional timeseries SPASE parameters
+
+  :param el: xml element 
+  :type el: lxml.etree._Element
+  """
   def __init__(self, el):
+    """Object constructor
+    """
     super(Element,self).__init__(el)
     ## Name of the Element
     self.name=self.get_name()
@@ -695,60 +727,64 @@ class Element(XMLElement):
     self.key=self.get_key()
     ## Index of the Element
     self.index=self.get_index()
-  ## Element.get_name Get element name
-  #
-  #  Get the current elements name.
-  #  @param self object pointer.
   def get_name(self):
+    """Get element name
+
+    :return: element name
+    :rtype: str
+    """
     return self.find(NAME_TAG).text
-  ## Element.set_name
-  #
-  #  Set the current elements name.
-  #  @param self object pointer.
-  #  @param name new component name.
   def set_name(self, name):
+    """Set element name
+
+    :param name: name
+    :type name: str
+    """
     name_el=self.find(NAME_TAG)
     name_el.text=name
-  ## Element.get_index Get element index 
-  #
-  #  Get the current elements index.
-  #  @param self object pointer.
   def get_index(self):
+    """Get element index
+
+    :return: element index
+    :rtype: int
+    """
     return self.find(INDEX_TAG).text
-  ## Element.get_key Get element parameter key 
-  #
-  #  Get the current elements parameter key.
-  #  @param self object pointer.
   def get_key(self):
+    """Get element key
+
+    :return: key
+    :rtype: str
+    """
     return self.find(PARAMETERKEY_TAG).text
-  ## Element.__str__ Parameter element representation.
-  #
-  #  Element string representation.
-  #  @param self object pointer.
-  #  @param n_indent int.
-  #  @return str.
   def __str__(self, n_indent=0):
+    """Element string representation
+
+    :param n_indent: number of indentation characters to insert at each line
+    :type n_indent: int
+    :return: object string representation
+    :rtype: str
+    """
     return "{}Component(key:{},name:{},i:{})".format(n_indent*"\t",self.key, self.name, self.index)
 
   
-## Contact class documentation.
-#
-#  This class is used for representing Contact tags with Spase resource files.
 class Contact(XMLElement):
-  ## Contact class initialization.
-  #
-  #  @param self object pointer.
-  #  @param element current element root.
+  """Class for representing SPASE Contact resources
+
+  :param element: xml element from which contact is defined
+  :type element: lxml.etree._Element
+  """
   def __init__(self, element):
+    """Object constructor
+    """
     super(Contact,self).__init__(element)
-  ## Contact __str__(n_indent, repository_root=None)
-  #
-  #  Return string representation of the contact element.
-  #  @param self object pointer.
-  #  @param n_indent number of indentation characters to insert at every line.
-  #  @param repository_root (default : None) when None then simply return str object. Otherwise check state and color accordingly.
-  #  @return str
   def __str__(self, n_indent=0, repository_root=None):
+    """Contact string representation
+
+    :param n_indent: number of indentation characters to insert a each line
+    :type n_indent: int
+    :param repository_root: root path of the SPASE repository
+    :type repository_root: str
+    """
     if repository_root is None:
       return "{}Contact(id:{},role:{})".format(n_indent*"\t",self.person_id(),self.role())
     person_id=self.person_id()
@@ -758,27 +794,30 @@ class Contact(XMLElement):
     if not os.path.exists(person_path):
       return strcol(self.__str__(n_indent=n_indent), "r")
     return strcol(self.__str__(n_indent=n_indent),"g")
-  ## Contact person_id()
-  #
-  #  Get the person id value associated with this object. It should be a valid SpaseAddr object.
-  #  @param self object pointer.
-  #  @return SpaseAddr
   def person_id(self):
+    """Get person id
+
+    :return: Person id value
+    :rtype: str
+    """
     return SpaseAddr(self.find(PERSONID_TAG).text)
-  ## Contact role ()
-  #
-  #  Get the role associated with the current contact object.
-  #  @param self object pointer.
-  #  @return std.
   def role(self):
+    """Get person role
+
+    :return: role
+    :rtype: str
+    """
     return self.find(ROLE_TAG).text
-  ## Contact.make_contact_xmlel (static)
-  #
-  #  Make a contact xml element.
-  #  @param person_id SpaseAddr 
-  #  @param role str.
-  #  @return etree.Element.
   def make_contact_xmlel(person_id, role="GeneralContact"):
+    """Make a Contact element
+
+    :param person_id: person id
+    :type person_id: str
+    :param role: role
+    :type role: str
+    :return: Contact XML element
+    :rtype: lxml.etree._Element
+    """
     contact_el=etree.Element("Contact")
     pid_el=etree.Element("PersonID")
     pid_el.text=person_id
@@ -788,58 +827,62 @@ class Contact(XMLElement):
     contact_el.append(role_el)
     return contact_el
 
-## Parameter class documentation.
-#
-#  This class is used for representing Parameters within the context of the SPASE NumericalData
-#  files.
 class Parameter(XMLElement):
-  ## Parameter.__init__ Object initialization.
-  #
-  #  Initialize the Parameter object. Pass the Parameter element.
+  """Class for representing parameters in the SPASE resource context
+
+  :param parameter_element: parameter XML element
+  :type parameter_element: lxml.etree._Element
+  """
   def __init__(self, parameter_element):
+    """Object constructor
+    """
     super(Parameter,self).__init__(parameter_element)
-  ## Parameter.get_id Get id of the Parameter object.
-  #
-  #  Return the id of the object as a str.
-  #  @param self object pointer.
   def get_id(self):
+    """Get parameter id
+
+    :return: parameter id
+    :rtype: str
+    """
     paramkey_el=self.find("ParameterKey")
     if not paramkey_el is None:
       return paramkey_el.text
     return None
-  ## Parameter.get_name Get parameter name.
-  #
-  #  Return the parameter Name tag text. Returns None on failure.
-  #  @param self object pointer.
   def get_name(self):
+    """Get parameter name
+
+    :return: parameter name
+    :rtype: str
+    """
     paramname_el=self.find("Name")
     if not paramname_el is None:
       return paramname_el.text
     return None
-  ## Parameter.get_ucd
-  #
-  #  Return the parameter Ucd tag content.
-  #  @param self object pointer.
-  #  @return ucd (str) None on fail.
   def get_ucd(self):
+    """Get ucd
+
+    :return: UCD value
+    :rtype: str
+    """
     el=self.find("Ucd")
     if el is None:
       return None
     return el.text
-  ## Parameter.get_units Get parameter units.
-  #
-  #  Return the parameter Units tag text. Returns None on failure.
-  #  @param self object pointer.
   def get_units(self):
+    """Get units
+
+    :return: units
+    :rtype: str
+    """
     el=self.find("Units")
     if not el is None:
       return el.text
     return None
-  ## Parameter.get_size Get size.
-  #
-  #  Return size of the parameter.
-  #  @param self object pointer.
   def get_size(self):
+    """Get size
+
+    :return: parameter size
+    :rtype: tuple ints
+    """
     el=None
     for e in self.root.iter():
       if isinstance(e, etree._Comment):
@@ -860,12 +903,12 @@ class Parameter(XMLElement):
       return v
     except:
       return 0
-  ## Parameter.valid
-  #
-  #  Check the validity of the parameter. If size if greater then one then each component must be defined correctly.
-  #  @param self object pointer.
-  #  @return bool True if Parameter element is well defined.
   def valid(self):
+    """Check if parameter definition is valid
+
+    :return: True is current parameter definition is valid, False otherwise
+    :rtype: bool
+    """
     if self.get_size()==1:
       return True
     if self.get_size()>1:
@@ -881,11 +924,12 @@ class Parameter(XMLElement):
           indexes.remove(index-1)
       return len(indexes)==0
     return False
-  ## Parameter.iter_component
-  #
-  #  Iterate over component Elements
-  #  @param self object pointer.
   def iter_component(self):
+    """Iterate over components
+
+    :return: components
+    :rtype: amdapy.spase.Element
+    """
     if self.get_size()>1:
       struct_el=self.find(STRUCTURE_TAG)
       for e in struct_el.iter():
@@ -893,13 +937,14 @@ class Parameter(XMLElement):
           continue
         if e.tag.endswith(ELEMENT_TAG):
           yield Element(e)
-  ## Parameter.component
-  #
-  #  Return the ith component.
-  #  @param self object pointer.
-  #  @param i index.
-  #  @return Element.
   def component(self,i):
+    """Get component by index
+
+    :param i: component index
+    :type i: int
+    :return: i-th component
+    :rtype: amdapy.spase.Element
+    """
     if i<0 or i>=self.get_size():
       return None
     struct_el=self.find(STRUCTURE_TAG)
@@ -911,24 +956,26 @@ class Parameter(XMLElement):
         if c==i:
           return Element(e)
         c=c+1
-  ## Parameter.component_name 
-  #
-  #  Return name of the ith component.
-  #  @param self object pointer.
-  #  @param i index.
-  #  @return str.
   def component_name(self,i):
+    """Get i-th components name
+
+    :param i: component index
+    :type i: int
+    :return: i-th component name
+    :rtype: str
+    """
     if i<0 or i>=self.get_size():
       return None
     el=self.component(i)
     return el.name
-  ## Parameter.__str__ object string representation.
-  #
-  #  Return string representation of the current object.
-  #  @param self object pointer.
-  #  @param n_indent number of indentation characters to insert at begining of each line.
-  #  @return str
   def __str__(self,n_indent=0):
+    """Parameter string representation
+
+    :param n_indent: number of indentation characters inserted at each line
+    :type n_indent: int
+    :return: parameters string representation
+    :rtype: str
+    """
     if self.get_size()==1:
       s="{}Parameter(key:{},name:{},size:{},disp_type:{})".format(n_indent*"\t",\
                                                                 self.get_id(),\
@@ -951,11 +998,12 @@ class Parameter(XMLElement):
     if self.valid():
       return strcol(s,"g")
     return strcol(s,"r")
-  ## Parameter.get_component_prefix
-  #
-  #  Get the component prefix for the current parameter.
-  #  @param self object pointer.
   def get_component_prefix(self):
+    """Get component prefix
+
+    :return: component prefix
+    :rtype: str
+    """
     #print("in Parameter.get_component_prefix : self.size={}".format(self.get_size()))
     #print("self.component_count/count_element : {}".format(self.count_elements()))
     if self.get_size()==1:
@@ -965,12 +1013,12 @@ class Parameter(XMLElement):
     # iterate over components.
     component_names=[c.name for c in self.iter_component()]
     return self.get_similar_prefix(np.array(component_names,dtype=object))
-  ## Parameter.set_component_prefix
-  #
-  #  Set the current objects component prefix.
-  #  @param self object pointer.
-  #  @param prefix str.
   def set_component_prefix(self, prefix):
+    """Set component prefix
+
+    :param prefix: prefix
+    :type prefix: str
+    """
     if self.get_size()!=1:
       # get the current prefix value
       old_prefix=self.get_component_prefix()
@@ -980,12 +1028,12 @@ class Parameter(XMLElement):
           cname=component.name
           newcname="{}{}".format(prefix,cname[len(old_prefix):])
           component.set_name(newcname)
-  ## Parameter.get_component_suffix
-  #
-  #  Get the components suffix scheme. For example the scheme could be xyz.
-  #  @param self object pointer.
-  #  @return str suffix scheme, empty string on failure.
   def get_component_suffix(self):
+    """Get component suffix
+
+    :return: component suffix
+    :rtype: str
+    """
     if self.get_size()==1:
       return ""
     # first try to determine the parameter components prefix
@@ -1000,12 +1048,12 @@ class Parameter(XMLElement):
     else:
       # no component prefix could be found.
       return ""
-  ## Parameter.set_component_suffix
-  #
-  #  Set the component suffix scheme.
-  #  @param self object pointer.
-  #  @param scheme (str) 
   def set_component_suffix(self,scheme):
+    """Set component suffix
+
+    :param scheme: suffix scheme
+    :type scheme: str
+    """
     # first get the prefix
     prefix=self.get_component_prefix()
     # if the new scheme length is smaller then the number of components then do nothing
@@ -1017,13 +1065,16 @@ class Parameter(XMLElement):
     for c in self.iter_component():
       c.set_name("{}{}".format(prefix,scheme[i]))
       i=i+1
-  ## Parameter.get_similar_prefix
-  #
-  #  Iterate over component names and search for a common prefix.
-  #  @param self object pointer.
-  #  @param name_list list of component names
-  #  @param n (default: None) int.
   def get_similar_prefix(self,name_list, n=None):
+    """Get similar prefix : this function is temporary and should be changes
+
+    :param name_list: list of parameter names
+    :type name_list: list of str
+    :param n: ?? number of parameters
+    :param n: int
+    :return: similar prefix
+    :rtype: str
+    """
     #print("in Parameter.get_similar_prefix : name_list={}, n={}".format(name_list, n))
     #print("self.size : {}".format(self.get_size()))
     if isinstance(name_list,list):
@@ -1044,12 +1095,12 @@ class Parameter(XMLElement):
         return n_l[0]
       else:
         return self.get_similar_prefix([name[:n-1] for name in name_list], n-1)
-  ## Parameter.count_elements Count Elements
-  # 
-  #  Count Element tags.
-  #  @param self object pointer.
-  #  @return int number of Element tags.
   def count_elements(self):
+    """Get element count
+
+    :return: element count
+    :rtype: int
+    """
     c=0
     for e in self.root.iter():
       if isinstance(e, etree._Comment):
@@ -1057,25 +1108,32 @@ class Parameter(XMLElement):
       if e.tag.endswith("Element"):
         c=c+1
     return c
-  ## Parameter.numericaldata_empty_str() Parameter string representation.
-  #
-  #  String representation of the Parameter object. For debugging purposes.
-  #  @param self object pointer.
   def numericaldata_empty__str__(self):
+    """Numerical data empty string
+
+    :return: numerical data empty string ??
+    :rtype: str
+    """
     if self.valid():
       return Fore.GREEN+"Parameter (id:{}, name:{}, units:{}, size:{})".format(self.get_id(), self.get_name(),self.get_units(), self.get_size())+Style.RESET_ALL
     return Fore.RED+"Parameter (id:{}, name:{}, units:{}, size:{})".format(self.get_id(), self.get_name(),self.get_units(), self.get_size())+Style.RESET_ALL
-  ## Parameter.make_parameter_element
-  #
-  #  Make a new Parameter object.
-  #  @param name name of the parameter.
-  #  @param key key of the parameter.
-  #  @param size int size.
-  #  @param component_prefix (default "u") prefix of all component names.
-  #  @param rhint (default "TimeSeries") resource type.
-  #  @return Parameter object.
   @staticmethod
   def make_parameter_xmlel(name, key, size=1, component_prefix="u", rhint="TimeSeries"):
+    """Make a parameter XML element
+
+    :param name: name of the parameter
+    :type name: str
+    :param key: parameter key
+    :type key: str
+    :param size: size of the parameter
+    :type size: int or tuple ints
+    :param component_prefix: prefix to give to the components
+    :type component_prefix: str
+    :param rhint: display type
+    :type rhint: str
+    :return: parameter XML element
+    :rtype: lxml.etree._Element
+    """
     print("making parameter : name: {}, key: {}, size:{}, component_prefix:{}".format(name,\
                                                                                       key,\
                                                                                       size,\
@@ -1101,15 +1159,19 @@ class Parameter(XMLElement):
       struct_el=Parameter.make_structure_xmlel(size, name_prefix="u", parameter_key=key)
       p_el.append(struct_el)
     return p_el
-  ## Parameter.make_structure_xmlel
-  #
-  #  Make the Structure xml element for multidimensional parameters.
-  #  @param size int.
-  #  @param name_prefix (default : "u") component name prefix.
-  #  @param parameter_key parameter key
-  #  @return etree.Element
   @staticmethod
   def make_structure_xmlel(size, name_prefix="u", parameter_key=""):
+    """Make structure XML element
+
+    :param size: size
+    :type size: int
+    :param name_prefix: component name prefix
+    :type name_prefix: str
+    :param parameter_key: parameter key
+    :type parameter_key: str
+    :return: component element
+    :rtype: lxml.etree._Element
+    """
     s=etree.Element("Structure")
     size_el=etree.Element("Size")
     size_el.text=str(size)
@@ -1128,61 +1190,65 @@ class Parameter(XMLElement):
 
       s.append(el)
     return s
-  ## Parameter.get_display_type
-  #
-  #  Get the current parameter display type.
-  #  @param self object pointer.
-  #  @return str
   def get_display_type(self):
+    """Get display type
+
+    :return: parameter display type
+    :rtype: str
+    """
     e=self.find("DisplayType")
     if e is None:
       return None
     return e.text
-  ## Parameter.set_display_type
-  #
-  #  Set the current object display type.
-  #  @param self object pointer.
-  #  @param value value of DisplayType tag.
   def set_display_type(self,value):
+    """Set display type
+
+    :param value: display type value
+    :type value: str
+    """
     e=self.find("DisplayType")
     if not e is None:
       e.text=value
-  ## Parameter.has_coordinate_system
-  #
-  #  Check if the current object has a coordinate system tag
-  #  @param self object pointer.
-  #  @return bool True is object contains a coordinate system tag, False otherwise.
   def has_coordinate_system(self):
+    """Check if parameter has a coordinate system
+
+    :return: True if found a CoordinateSystem element, False otherwise
+    :rtype: bool
+    """
     el=self.find(COORDINATESYSTEM_TAG)
     if el is None:
       return False
     return True
-  ## Parameter.get_coordinate_system_name
-  #
-  #  Get the current parameter coordinate system name.
-  #  @param self object pointer.
-  #  @return str coordinate system name. None on failure.
   def get_coordinate_system_name(self):
+    """Get coordinate system name
+
+    :return: Coordinate system name
+    :rtype: str
+    """
     el=self.find(COORDINATESYSTEMNAME_TAG)
     if el is None:
       return None
     return el.text
-## SpaseManager class.
-#
-#  Used for managing SpaseResource objects.
+
 class SpaseManager:
-  ## SpaseManager initialization
-  #
-  #  @param self the object pointer
-  #  @param root the root path. Search for xml files stored under root directory.
+  """Class for managing SPASE resources
+
+  :param root: root of the repository
+  :type root: str
+  """
   def __init__(self, root):
+    """Object constructor
+    """
     ## Root of the repository.
     self.root=root
-  ## SpaseManager.iter_xml_file_path Iterate over XML file paths
-  # 
-  #  @param self the object pointer.
-  #  @param path path at which to start iterating
   def iter_xml_file_path(self,path=None):
+    """Iterate over all XML files under repository root directory
+
+    :param path: path to walk, default is None and walks the default root directory
+    :type path: str or None
+    :return: path to XML files
+    :rtype: str
+    """
     if path is None:
       for p in self.iter_xml_file_path(path=self.root):
         yield p
@@ -1191,12 +1257,14 @@ class SpaseManager:
         for f in files:
           if f.endswith(".xml"):
             yield os.path.join(root,f)
-  ## SpaseManager.iter_resource Iterate over SpaseResource objects.
-  #
-  #  Yields every SpaseResource object found.
-  #  @param self pointer to the object.
-  #  @param rtype resource type.
   def iter_resource(self, rtype=None):
+    """Iterate over SPASE resource files
+
+    :param rtype: resource type
+    :type rtype: str
+    :return: resources
+    :rtype: amda.spase.SpaseResource
+    """
     for p in self.iter_xml_file_path():
       res=None
       try:
@@ -1211,40 +1279,41 @@ class SpaseManager:
       else:
         if res.is_type(rtype):
           yield res
-  ## SpaseManager.iter_numerical_data Iterate over NumericalData files.
-  #
-  #  Yield a NumericalData object for each resource found that is of right type.
-  #  @param self object pointer.
   def iter_numerical_data(self):
+    """Iterate numerical data resources
+
+    :return: NumercialData resouces
+    :rtype: amdapy.spase.NumericalData
+    """
     for r in self.iter_resource(rtype=NUMERICALDATA_TYPE):
       yield NumericalData(r.filename)
-  ## SpaseManager.iter_instrument Iterate over Instrument files.
-  #
-  #  Yield a Instrument object for each resource found that is of right type.
-  #  @param self object pointer.
   def iter_instrument(self):
+    """Iterate Instrument resources
+
+    :return: Instrument resources
+    :rtype: amdapy.spase.Instrument
+    """
     for r in self.iter_resource(rtype=INSTRUMENT_TYPE):
       yield Instrument(r.filename)
-  ## SpaseManager.iter_observatory Iterate over Observatory files.
-  #
-  #  Yield a Observatory object for each resource found that is of right type.
-  #  @param self object pointer.
   def iter_observatory(self):
+    """Iterate Observatory resources
+
+    :return: Observatory resources
+    :rtype: amdapy.spase.Observatory
+    """
     for r in self.iter_resource(rtype=OBSERVATORY_TYPE):
       yield Observatory(r.filename)
-  ## SpaseManager.iter_person Iterate over Person files.
-  #
-  #  Yield a Person object for each resource found that is of right type.
-  #  @param self object pointer.
   def iter_person(self):
+    """Iterate Person resources
+
+    :return: Person resources
+    :rtype: amdapy.spase.Person
+    """
     for r in self.iter_resource(rtype=PERSON_TYPE):
       yield Person(r.filename)
-  ## SpaseManager.health_check Health check. 
-  #
-  #  Check repository health status. Look for corrupted resources, duplicates, resources
-  #  with wrong id, etc
-  #  @param self object pointer.
   def health_check(self):
+    """Check the health of the repository
+    """
     duplicated_ids=self.get_duplicate_ids()
     if len(duplicated_ids):
       print("Duplicates found : {}".format(len(duplicated_ids)))
@@ -1270,15 +1339,12 @@ class SpaseManager:
               r=subprocess.check_output(cmd.split(" "))
               print(r)
         print("")
-  ## SpaseManager.get_duplicate_ids Check for duplicate resources.
-  #
-  #  Resources are uniquely identified by their ResourceID value. If the repository contains
-  #  multiple SPASE resource files with the same ResourceID value it may cause errors. 
-  #  Returns a dictionary indexed by the duplicated ResourceID values and with values the list
-  #  of files containing the corresponding id.
-  #  @param self object pointer.
-  #  @return dict(ResourceID, list(str)) dictionary indexed by ResourceID encountered more then once, and with value a list of files having the corresponding id.
   def get_duplicate_ids(self):
+    """Get list of resources with duplicated ids
+
+    :return: dictionary indexed by resource id encountered more then once, and with values a list of files having the corresponding id.
+    :rtype: dict
+    """
     id_list={}
     duplicates={}
     for res in self.iter_resource():
@@ -1292,46 +1358,51 @@ class SpaseManager:
         else:
           duplicates[res_id].append(res.filename)
     return duplicates
-  ## SpaseManager.get_resource_by_id Get a SpaseResource object by ID.
-  #
-  #  Return object matching given ResourceID.
-  #  @param self object pointer.
-  #  @param res_id std resource id of desired SPASE object.
-  #  @return list (SpaseResource) of objects with input id. In a healthy repository we only expect the list to be of length one.
   def get_resource_by_id(self, res_id):
+    """Get a resource by id
+    
+    :param res_id: resource id
+    :type res_id: str
+    :return: list of resource objects with corresponding id
+    :rtype: list
+    """
     a=[]
     for res in self.iter_resource():
       if res.resource_id()==res_id:
         a.append(res)
     return a
-  ## SpaseManager.resource_id_to_path (static) Get absolute path from resource id.
-  #
-  #  Returns absolute expected path of a SpaseResource with a desired ResourceID.
-  #  @param res_id resource id.
-  #  @param repository_root root of the repository.
-  #  @return str absolute path corresponding to input resource id.
   @staticmethod
   def resource_id_to_path(res_id, repository_root):
+    """Get absolute path of the spase resource file
+
+    :param res_id: resource id
+    :type res_id: str
+    :param repository_root: root directory of the SPASE repository
+    :type repository_root: str
+    """
     t=res_id.replace(SPASE_ADDR_PREFIX, "")
     return os.path.join(repository_root, "{}.xml".format(t))
-  ## SpaseManager.path_to_resource_id (static) Get resource id from path.
-  #
-  #  Returns resource id corresponding to a file stored at the desired path.
-  #  @param path str resource path.
-  #  @param repository_root root of the repository.
-  #  @return str resource id corresponding to the input path.
   @staticmethod
   def path_to_resource_id(path, repository_root):
+    """Get resource id corresponding to a given path
+
+    :param path: path
+    :type path: str
+    :param repository_root: repository root directory
+    :type repository_root: str
+    :return: resource id corresponding to :data:`path`
+    :rtype: str
+    """
     t=path.replace(repository_root, "")
     if t.startswith("/"):
       t=t[1:]
     return "{}{}".format(SPASE_ADDR_PREFIX, t.replace(".xml",""))
-  ## SpaseManager.get_bad_ids Check for resources whose ResourceID value does not correspond to their path.
-  #
-  #  Get bad ided resources.
-  #  @param self object pointer.
-  #  @return list of (filename, id) tuples
   def get_bad_ids(self):
+    """Check for all badly ided resources and return the list
+
+    :return: list of pairs (path, id) 
+    :rtype: list
+    """
     a=[]
     for r in self.iter_resource():
       path=r.filename
@@ -1340,12 +1411,14 @@ class SpaseManager:
       if path!=id_path:
         a.append((path, id_))
     return a
-  ## SpaseManager.find_resource Find resource file.
-  #
-  #  Find a SPASE resource file by name.
-  #  @param name expected filename.
-  #  @return SpaseResource object, None on failure.
   def find_resource(self,name):
+    """Find resource by filename
+
+    :param name: name of the resource file
+    :type name: str
+    :return: Spase resource if found None otherwise
+    :rtype: amdapy.spase.SpaseResource
+    """
     cmd="find {}/ -type f -name '*{}.xml'".format(self.root, name)
     os.system(cmd)
     path=list(filter(None,get_cmd_output(cmd).split("\n")))
@@ -1359,12 +1432,14 @@ class SpaseManager:
       print("RESOURCE DOES NOT EXIST")
       return None
 
-## Run system command 
-#
-#  Run system command and return output as string.
-#  @param cmd system command we want to run.
-#  @return str command output
 def get_cmd_output(cmd):
+  """Run a command and get output
+
+  :param cmd: command
+  :type cmd: str
+  :return: output
+  :rtype: str
+  """
   os.system("{} > temp.output".format(cmd))
   a=""
   with open("temp.output","r") as f:
@@ -1374,10 +1449,12 @@ def get_cmd_output(cmd):
   return a
 
      
-## Parse arguments.
-#
-#  Parse command line arguments.
 def parse_args():
+  """Parse command line args
+
+  :return: command line arguments
+  :rtype: argparse.Arguments
+  """
   parser=argparse.ArgumentParser()
   parser.add_argument("--duplicates",help="show duplicate resources.", action="store_true")
   parser.add_argument("-l","--list", help="list resources.", action="store_true")
@@ -1391,10 +1468,12 @@ def parse_args():
   parser.add_argument("-f","--find",help="find resource file by name.",type=str, default="")
   return parser.parse_args()
 
-## Resource list from arguments.
-#
-#  Get list of focused resource types from the command line arguments.
 def rtype_from_args(args):
+  """Get list of resource types from args
+
+  :return: list of types
+  :rtype: list
+  """
   rtype=[]
   if args.person:
     rtype.append(PERSON_TYPE)

@@ -4,6 +4,8 @@
 :file: dataset.py
 :brief: Base classes and functions for manipulating dataset objects.
 
+Base class for representing datasets. Provides access to the data and variables names etc.
+
 """
 import numpy as np
 from amdapy.core.variable import Variable
@@ -13,22 +15,24 @@ class Dataset:
   of variables, often stored in a file, but can exist only in memory. This is the base class from
   which we derive all other dataset. In particular this call will be subclassed to provide interfaces
   to the various file formats we can encounter during our work.
+  
+  :param dataset_id: dataset identification string, should be unique.
+  :type dataset_id: str
+  :param variables: list of variables contained in the dataset, optional
+  :type param: list of :class:`amdapy.core.variable.Variable` objects
   """
   def __init__(self, dataset_id, variables=[]):
-    """Dataset initialization
-    :param dataset_id: dataset identification, should be unique withing the context of a dataset 
-    provider.
-    :type dataset_id: string
-    :param variables: list of variables belonging to the dataset
-    :type variables: list of amdapy.core.Variable objects.
+    """Constructor
     """
     self.id=dataset_id
     self.variables=variables
   def contains(self, var):
     """Check if the current dataset contains a variable
+
     :param var: variable object
     :type var: amdapy.core.Variable
-    :return: bool
+    :return: True if dataset contains variable, False otherwise
+    :rtype: bool
     """
     for v in self.variables:
       if v==var:
@@ -36,6 +40,9 @@ class Dataset:
     return False
   def __str__(self):
     """Dataset string representation
+
+    :return: string representation of the dataset object.
+    :rtype: str
     """
     return "Dataset(id:{},n_var:{})".format(self.id,len(self.variables))
 

@@ -61,7 +61,19 @@ class ParameterElement:
     self.parent_dataset_id=parent_id
     self.components=[ComponentElement(e) for e in el.iter(tag=COMPONENT_TAG)]
   def __str__(self):
+    """ParameterElement string representation
+
+    :return: current object string representation
+    :rtype: str
+    """
     return "ParameterEl(id:{},name:{},units:{},disptype:{},size:{}".format(self.id,self.name, self.units,self.displaytype, len(self.components))
+  def component_count(self):
+    """Count components
+
+    :return: number of components of the current parameter
+    :rtype: int
+    """
+    return len(self.components)
 
 class DatasetElement:
   def __init__(self,el):

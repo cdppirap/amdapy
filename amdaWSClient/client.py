@@ -504,7 +504,6 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
         start=start.strftime(DATE_FORMAT)
     if isinstance(stop,datetime.datetime):
         stop=stop.strftime(DATE_FORMAT)
-    print("in get_parameter {}".format(param_id))
     client=AMDARESTClient()
     t=client.auth()
     if t is None:
@@ -517,7 +516,6 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
     dparser=date_parser
     if dparser is None:
         dparser=common_date_parser
-    print("done")
     return pd.read_csv(data_file, comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
 def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
     start,stop=start_date,stop_date
@@ -525,7 +523,6 @@ def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
         start=start.strftime(DATE_FORMAT)
     if isinstance(stop,datetime.datetime):
         stop=stop.strftime(DATE_FORMAT)
-    print("in get_dataset : ",type(start),type(stop))
     client=AMDARESTClient()
     t=client.auth()
     if t is None:
