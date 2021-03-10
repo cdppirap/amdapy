@@ -1,0 +1,221 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>amdapy.viview &#8212; amdapy 1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for amdapy.viview</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:author: Alexandre Schulz</span>
+<span class="sd">:email: alexandre.schulz@irap.omp.eu</span>
+<span class="sd">:brief: Script for generating a pdf file with a summary of a dataset.</span>
+
+<span class="sd">This script is used to generate a pdf file containing a summary of the data contained in a dataset </span>
+<span class="sd">installed or about to be installed into AMDA. The scripts produces basic plots and tables of the </span>
+<span class="sd">variables contained in the dataset , their datatype, and their shapes. </span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="k">import</span> <span class="n">Dataset</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="VIViewer"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer">[docs]</a><span class="k">class</span> <span class="nc">VIViewer</span><span class="p">:</span>
+  <span class="sd">&quot;&quot;&quot;Class for generating the pdf summary of a collection of netCDF files.</span>
+
+<span class="sd">  :param filename: path to the dataset files</span>
+<span class="sd">  :type filename: str</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Object constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">=</span><span class="n">Dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="s2">&quot;r&quot;</span><span class="p">,</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;NETCDF3_CLASSIC&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tex_content</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<div class="viewcode-block" id="VIViewer.save"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.save">[docs]</a>  <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save the pdf file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;output.pdf&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving the resume for file : </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">output_file</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">init_tex_content</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_tex_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tex_dimension_table</span><span class="p">())</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_tex_content</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tex_variable_table</span><span class="p">())</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tex_plots</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">end_tex_content</span><span class="p">()</span>
+    <span class="c1"># save the tex_content to a tex file and then use pdflatex</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">save_tex</span><span class="p">(</span><span class="s2">&quot;temp.tex&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;pdflatex temp.tex&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;xdg-open temp.pdf&quot;</span><span class="p">)</span></div>
+<div class="viewcode-block" id="VIViewer.save_tex"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.save_tex">[docs]</a>  <span class="k">def</span> <span class="nf">save_tex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save the Tex content to a temporary file before calling the pdflatex tool.</span>
+<span class="sd">    </span>
+<span class="sd">    :param filename: filename to the Tex file</span>
+<span class="sd">    :type filename: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span> <span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tex_content</span><span class="p">)</span>
+      <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+<div class="viewcode-block" id="VIViewer.init_tex_content"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.init_tex_content">[docs]</a>  <span class="k">def</span> <span class="nf">init_tex_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize the Tex content</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tex_content</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\\</span><span class="s2">documentclass[a4paper]</span><span class="si">{article}</span><span class="s2"></span>
+<span class="se">\\</span><span class="s2">usepackage</span><span class="si">{graphicx}</span><span class="s2"></span>
+<span class="se">\\</span><span class="s2">begin</span><span class="si">{document}</span><span class="s2"></span>
+<span class="s2">                     &quot;&quot;&quot;</span></div>
+<div class="viewcode-block" id="VIViewer.end_tex_content"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.end_tex_content">[docs]</a>  <span class="k">def</span> <span class="nf">end_tex_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;End the Tex content</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">end_tex</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n\\</span><span class="s2">end</span><span class="si">{document}</span><span class="s2">&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append_tex_content</span><span class="p">(</span><span class="n">end_tex</span><span class="p">)</span></div>
+<div class="viewcode-block" id="VIViewer.append_tex_content"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.append_tex_content">[docs]</a>  <span class="k">def</span> <span class="nf">append_tex_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Append Tex content to current object</span>
+
+<span class="sd">    :param content: Tex content to append</span>
+<span class="sd">    :type content: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tex_content</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tex_content</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">content</span></div>
+<div class="viewcode-block" id="VIViewer.tex_variable_table"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.tex_variable_table">[docs]</a>  <span class="k">def</span> <span class="nf">tex_variable_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a Tex table string containing a description of the variables contained in the dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="se">\\</span><span class="s2">section</span><span class="si">{Variables}</span><span class="s2"></span>
+<span class="se">\\</span><span class="s2">begin</span><span class="si">{center}</span><span class="s2"></span>
+<span class="se">\\</span><span class="s2">begin</span><span class="si">{tabular}</span><span class="s2">{|c|c|c|}</span>
+<span class="se">\\</span><span class="s2">hline</span>
+<span class="se">\\</span><span class="s2">textbf{Variable name} &amp; </span><span class="se">\\</span><span class="s2">textbf</span><span class="si">{Datatype}</span><span class="s2"> &amp; </span><span class="se">\\</span><span class="s2">textbf</span><span class="si">{Dimensions}</span><span class="s2"> </span><span class="se">\\\\</span><span class="s2"></span>
+<span class="s2">&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+      <span class="n">v</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+      <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="o">+</span><span class="s2">&quot;$</span><span class="si">{}</span><span class="s2">$ &amp; $</span><span class="si">{}</span><span class="s2">$ &amp; $</span><span class="si">{}</span><span class="s2">$ </span><span class="se">\\\\\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">,</span><span class="n">v</span><span class="o">.</span><span class="n">datatype</span><span class="p">,</span><span class="n">v</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> 
+    <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">hline</span><span class="se">\\</span><span class="s2">end</span><span class="si">{tabular}</span><span class="se">\\</span><span class="s2">end</span><span class="si">{center}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">a</span></div>
+<div class="viewcode-block" id="VIViewer.tex_dimension_table"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.tex_dimension_table">[docs]</a>  <span class="k">def</span> <span class="nf">tex_dimension_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a Tex table containing descriptions of the dimensions contained in the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="se">\\</span><span class="s2">section</span><span class="si">{Dimensions}</span><span class="s2"></span>
+<span class="se">\\</span><span class="s2">begin</span><span class="si">{center}</span><span class="s2"></span>
+<span class="se">\\</span><span class="s2">begin</span><span class="si">{tabular}</span><span class="s2">{|c|c|}</span>
+<span class="se">\\</span><span class="s2">hline</span>
+<span class="se">\\</span><span class="s2">textbf{Dimension name} &amp; </span><span class="se">\\</span><span class="s2">textbf</span><span class="si">{Size}</span><span class="s2"> </span><span class="se">\\\\\n</span><span class="s2">&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">dimensions</span><span class="p">:</span>
+      <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="o">+</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> &amp; </span><span class="si">{}</span><span class="s2"> </span><span class="se">\\\\\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">hline</span><span class="se">\\</span><span class="s2">end</span><span class="si">{tabular}</span><span class="se">\\</span><span class="s2">end</span><span class="si">{center}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">a</span></div>
+<div class="viewcode-block" id="VIViewer.plot_timeseries"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.plot_timeseries">[docs]</a>  <span class="k">def</span> <span class="nf">plot_timeseries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">varname</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a Timeseries plot</span>
+
+<span class="sd">    :param varname: name of the variable to plot</span>
+<span class="sd">    :type varname: str</span>
+<span class="sd">    :param var: variable data</span>
+<span class="sd">    :type var: list type object </span>
+<span class="sd">    :param t: time vector</span>
+<span class="sd">    :type t: list type object</span>
+<span class="sd">    :param output: path at which to save to figure</span>
+<span class="sd">    :type output: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Variable : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">varname</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">var</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span></div>
+<div class="viewcode-block" id="VIViewer.get_time_data"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.get_time_data">[docs]</a>  <span class="k">def</span> <span class="nf">get_time_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the time data for current dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;Time&quot;</span><span class="p">][:])</span></div>
+<div class="viewcode-block" id="VIViewer.tex_plots"><a class="viewcode-back" href="../../amdapy.html#amdapy.viview.VIViewer.tex_plots">[docs]</a>  <span class="k">def</span> <span class="nf">tex_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add plots to Tex content</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plots</span><span class="o">=</span><span class="p">{}</span>
+    <span class="n">time_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_time_data</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+      <span class="c1"># if datatype is float then create a plot of the data and save it</span>
+      <span class="n">var</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">datatype</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
+        <span class="n">var_data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">var</span><span class="p">[:])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_timeseries</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">var_data</span><span class="p">,</span><span class="n">time_data</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.png&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> 
+        <span class="n">plots</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.png&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">a</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">section{Plot $&quot;</span><span class="o">+</span><span class="n">v</span><span class="o">+</span><span class="s2">&quot;$}</span><span class="se">\n\\</span><span class="s2">begin</span><span class="si">{center}</span><span class="se">\n\\</span><span class="s2">includegraphics{&quot;</span><span class="o">+</span><span class="n">v</span><span class="o">+</span><span class="s2">&quot;.png }</span><span class="se">\n\\</span><span class="s2">end</span><span class="si">{center}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append_tex_content</span><span class="p">(</span><span class="n">a</span><span class="p">)</span></div></div>
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+  <span class="n">nc_filename</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+  <span class="n">viewer</span><span class="o">=</span><span class="n">VIViewer</span><span class="p">(</span><span class="n">nc_filename</span><span class="p">)</span>
+  <span class="n">viewer</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Alexandre Schulz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

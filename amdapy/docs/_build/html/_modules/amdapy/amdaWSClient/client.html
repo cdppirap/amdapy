@@ -1,0 +1,629 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>amdapy.amdaWSClient.client &#8212; amdapy 1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for amdapy.amdaWSClient.client</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">enum</span> <span class="k">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">import</span> <span class="n">fromstring</span><span class="p">,</span> <span class="n">ParseError</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">urlparse</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="k">import</span> <span class="n">etree</span>
+<span class="kn">import</span> <span class="nn">io</span>
+
+<span class="c1"># observatory tree</span>
+<span class="kn">from</span> <span class="nn">.obstree</span> <span class="k">import</span> <span class="n">ObsTree</span>
+
+<div class="viewcode-block" id="AMDAOutputFormat"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDAOutputFormat">[docs]</a><span class="k">class</span> <span class="nc">AMDAOutputFormat</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum : Available output file formats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ASCII</span> <span class="o">=</span> <span class="s1">&#39;ASCII&#39;</span>
+    <span class="n">VOTABLE</span> <span class="o">=</span> <span class="s1">&#39;VOTable&#39;</span>
+    <span class="n">CDF</span> <span class="o">=</span> <span class="s1">&#39;CDF&#39;</span></div>
+    <span class="c1"># File format netCDF not implemented in AMDA</span>
+    <span class="c1"># NETCDF = &#39;netCDF&#39;</span>
+
+
+<div class="viewcode-block" id="AMDATimeFormat"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDATimeFormat">[docs]</a><span class="k">class</span> <span class="nc">AMDATimeFormat</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum : Available output time formats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ISO</span> <span class="o">=</span> <span class="s1">&#39;ISO8601&#39;</span>
+    <span class="n">TIMESTAMP</span> <span class="o">=</span> <span class="s1">&#39;unixtime&#39;</span></div>
+
+
+<div class="viewcode-block" id="AMDAOutputCompression"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDAOutputCompression">[docs]</a><span class="k">class</span> <span class="nc">AMDAOutputCompression</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum : Available compression mode</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">GZIP</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="AMDASpaceCraft"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDASpaceCraft">[docs]</a><span class="k">class</span> <span class="nc">AMDASpaceCraft</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum : Available missions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">CASSINI</span> <span class="o">=</span> <span class="s2">&quot;Cassini&quot;</span>
+    <span class="n">GALILEO</span> <span class="o">=</span> <span class="s2">&quot;Galileo&quot;</span>
+    <span class="n">VOYAGER1</span> <span class="o">=</span> <span class="s2">&quot;Voyager_1&quot;</span>
+    <span class="n">VOYAGER2</span> <span class="o">=</span> <span class="s2">&quot;Voyager_2&quot;</span>
+    <span class="n">PIONEER10</span> <span class="o">=</span> <span class="s2">&quot;Pioneer_10&quot;</span>
+    <span class="n">PIONEER11</span> <span class="o">=</span> <span class="s2">&quot;Pioneer_11&quot;</span>
+    <span class="n">PVO</span> <span class="o">=</span> <span class="s2">&quot;PVO&quot;</span>
+    <span class="n">ACE</span> <span class="o">=</span> <span class="s2">&quot;ACE&quot;</span>
+    <span class="n">VEX</span> <span class="o">=</span> <span class="s2">&quot;VEX&quot;</span>
+    <span class="n">MEX</span> <span class="o">=</span> <span class="s2">&quot;MEX&quot;</span>
+    <span class="n">MGS</span> <span class="o">=</span> <span class="s2">&quot;MGS&quot;</span>
+    <span class="n">MAVEN</span> <span class="o">=</span> <span class="s2">&quot;MAVEN&quot;</span>
+    <span class="n">MESSENGER</span> <span class="o">=</span> <span class="s2">&quot;MESSENGER&quot;</span>
+    <span class="n">ULYSSES</span> <span class="o">=</span> <span class="s2">&quot;ULYSSES&quot;</span>
+    <span class="n">STEREOA</span> <span class="o">=</span> <span class="s2">&quot;Stereo-A&quot;</span>
+    <span class="n">STEREOB</span> <span class="o">=</span> <span class="s2">&quot;Stereo-B&quot;</span>
+    <span class="n">WIND</span> <span class="o">=</span> <span class="s2">&quot;WIND&quot;</span>
+    <span class="n">THEMISA</span> <span class="o">=</span> <span class="s2">&quot;THEMIS-A&quot;</span>
+    <span class="n">THEMISB</span> <span class="o">=</span> <span class="s2">&quot;THEMIS-B&quot;</span>
+    <span class="n">THEMISC</span> <span class="o">=</span> <span class="s2">&quot;THEMIS-C&quot;</span>
+    <span class="n">THEMISD</span> <span class="o">=</span> <span class="s2">&quot;THEMIS-D&quot;</span>
+    <span class="n">THEMISE</span> <span class="o">=</span> <span class="s2">&quot;THEMIS-E&quot;</span>
+    <span class="n">CLUSTER1</span> <span class="o">=</span> <span class="s2">&quot;CLUSTER1&quot;</span>
+    <span class="n">CLUSTER2</span> <span class="o">=</span> <span class="s2">&quot;CLUSTER2&quot;</span>
+    <span class="n">CLUSTER3</span> <span class="o">=</span> <span class="s2">&quot;CLUSTER3&quot;</span>
+    <span class="n">CLUSTER4</span> <span class="o">=</span> <span class="s2">&quot;CLUSTER4&quot;</span>
+    <span class="n">DOUBLESTAR1</span> <span class="o">=</span> <span class="s2">&quot;DoubleStar1&quot;</span>
+    <span class="n">IMP8</span> <span class="o">=</span> <span class="s2">&quot;IMP-8&quot;</span>
+    <span class="n">GEOTAIL</span> <span class="o">=</span> <span class="s2">&quot;GEOTAIL&quot;</span>
+    <span class="n">POLAR</span> <span class="o">=</span> <span class="s2">&quot;POLAR&quot;</span>
+    <span class="n">INTERBALLTAIL</span> <span class="o">=</span> <span class="s2">&quot;INTERBALL-Tail&quot;</span>
+    <span class="n">ISEE1</span> <span class="o">=</span> <span class="s2">&quot;ISEE-1&quot;</span>
+    <span class="n">ISEE2</span> <span class="o">=</span> <span class="s2">&quot;ISEE-2&quot;</span></div>
+
+
+<div class="viewcode-block" id="AMDACoordinatesSystem"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDACoordinatesSystem">[docs]</a><span class="k">class</span> <span class="nc">AMDACoordinatesSystem</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum : Available Coordinates systems</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">CPHIO</span> <span class="o">=</span> <span class="s2">&quot;CPHIO&quot;</span>
+    <span class="n">GPHIO</span> <span class="o">=</span> <span class="s2">&quot;GPHIO&quot;</span>
+    <span class="n">IPHIO</span> <span class="o">=</span> <span class="s2">&quot;IPHIO&quot;</span>
+    <span class="n">EPHIO</span> <span class="o">=</span> <span class="s2">&quot;EPHIO&quot;</span>
+    <span class="n">EQUATORIAL</span> <span class="o">=</span> <span class="s2">&quot;Equatorial&quot;</span>
+    <span class="n">CGM</span> <span class="o">=</span> <span class="s2">&quot;CGM&quot;</span>
+    <span class="n">CARRINGTON</span> <span class="o">=</span> <span class="s2">&quot;Carrington&quot;</span>
+    <span class="n">DM</span> <span class="o">=</span> <span class="s2">&quot;DM&quot;</span>
+    <span class="n">GEI</span> <span class="o">=</span> <span class="s2">&quot;GEI&quot;</span>
+    <span class="n">GEO</span> <span class="o">=</span> <span class="s2">&quot;GEO&quot;</span>
+    <span class="n">GSE</span> <span class="o">=</span> <span class="s2">&quot;GSE&quot;</span>
+    <span class="n">GSEQ</span> <span class="o">=</span> <span class="s2">&quot;GSEQ&quot;</span>
+    <span class="n">GSM</span> <span class="o">=</span> <span class="s2">&quot;GSM&quot;</span>
+    <span class="n">HAE</span> <span class="o">=</span> <span class="s2">&quot;HAE&quot;</span>
+    <span class="n">HCC</span> <span class="o">=</span> <span class="s2">&quot;HCC&quot;</span>
+    <span class="n">HCI</span> <span class="o">=</span> <span class="s2">&quot;HCI&quot;</span>
+    <span class="n">HCR</span> <span class="o">=</span> <span class="s2">&quot;HCR&quot;</span>
+    <span class="n">HEE</span> <span class="o">=</span> <span class="s2">&quot;HEE&quot;</span>
+    <span class="n">HEEQ</span> <span class="o">=</span> <span class="s2">&quot;HEEQ&quot;</span>
+    <span class="n">HG</span> <span class="o">=</span> <span class="s2">&quot;HG&quot;</span>
+    <span class="n">HGI</span> <span class="o">=</span> <span class="s2">&quot;HGI&quot;</span>
+    <span class="n">HPC</span> <span class="o">=</span> <span class="s2">&quot;HPC&quot;</span>
+    <span class="n">HPR</span> <span class="o">=</span> <span class="s2">&quot;HPR&quot;</span>
+    <span class="n">J2000</span> <span class="o">=</span> <span class="s2">&quot;J2000&quot;</span>
+    <span class="n">LGM</span> <span class="o">=</span> <span class="s2">&quot;LGM&quot;</span>
+    <span class="n">MAG</span> <span class="o">=</span> <span class="s2">&quot;MAG&quot;</span>
+    <span class="n">MFA</span> <span class="o">=</span> <span class="s2">&quot;MFA&quot;</span>
+    <span class="n">RTN</span> <span class="o">=</span> <span class="s2">&quot;RTN&quot;</span>
+    <span class="n">SC</span> <span class="o">=</span> <span class="s2">&quot;SC&quot;</span>
+    <span class="n">SE</span> <span class="o">=</span> <span class="s2">&quot;SE&quot;</span>
+    <span class="n">SM</span> <span class="o">=</span> <span class="s2">&quot;SM&quot;</span>
+    <span class="n">SR</span> <span class="o">=</span> <span class="s2">&quot;SR&quot;</span>
+    <span class="n">SR2</span> <span class="o">=</span> <span class="s2">&quot;SR2&quot;</span>
+    <span class="n">SSE</span> <span class="o">=</span> <span class="s2">&quot;SSE&quot;</span>
+    <span class="n">SSE_L</span> <span class="o">=</span> <span class="s2">&quot;SSE_L&quot;</span>
+    <span class="n">SPACECRAFTORBPLANE</span> <span class="o">=</span> <span class="s2">&quot;SpacecraftOrbitPlane&quot;</span>
+    <span class="n">WGS84</span> <span class="o">=</span> <span class="s2">&quot;WGS84&quot;</span>
+    <span class="n">MSO</span> <span class="o">=</span> <span class="s2">&quot;MSO&quot;</span>
+    <span class="n">VSO</span> <span class="o">=</span> <span class="s2">&quot;VSO&quot;</span></div>
+
+
+<div class="viewcode-block" id="AMDAOrbitUnit"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDAOrbitUnit">[docs]</a><span class="k">class</span> <span class="nc">AMDAOrbitUnit</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enum : Available units for orbits</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">KM</span> <span class="o">=</span> <span class="s2">&quot;km&quot;</span>
+    <span class="n">RS</span> <span class="o">=</span> <span class="s2">&quot;Rs&quot;</span>
+    <span class="n">RJ</span> <span class="o">=</span> <span class="s2">&quot;Rj&quot;</span>
+    <span class="n">RCA</span> <span class="o">=</span> <span class="s2">&quot;Rca&quot;</span>
+    <span class="n">RGA</span> <span class="o">=</span> <span class="s2">&quot;Rga&quot;</span>
+    <span class="n">RIO</span> <span class="o">=</span> <span class="s2">&quot;Rio&quot;</span>
+    <span class="n">REU</span> <span class="o">=</span> <span class="s2">&quot;Reu&quot;</span>
+    <span class="n">RV</span> <span class="o">=</span> <span class="s2">&quot;Rv&quot;</span>
+    <span class="n">RM</span> <span class="o">=</span> <span class="s2">&quot;Rm&quot;</span>
+    <span class="n">RE</span> <span class="o">=</span> <span class="s2">&quot;Re&quot;</span>
+    <span class="n">AU</span> <span class="o">=</span> <span class="s2">&quot;AU&quot;</span></div>
+
+
+<div class="viewcode-block" id="AMDARESTClient"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient">[docs]</a><span class="k">class</span> <span class="nc">AMDARESTClient</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    AMDA REST WS client implementation</span>
+<span class="sd">    API description: http://amda.irap.omp.eu/help/apidoc/</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    proxy :</span>
+<span class="sd">        To use only if you are behind a proxy (default None)</span>
+<span class="sd">    entry_point : str</span>
+<span class="sd">        Define AMDA REST WS entry point (default http://amda.irap.omp.eu/php/rest/)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__proxies</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">__entry_point</span> <span class="o">=</span> <span class="s1">&#39;http://amda.irap.omp.eu/php/rest/&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_point</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">proxies</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">entry_point</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__entry_point</span> <span class="o">=</span> <span class="n">entry_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__proxies</span> <span class="o">=</span> <span class="n">proxies</span>
+
+<div class="viewcode-block" id="AMDARESTClient.is_alive"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.is_alive">[docs]</a>    <span class="k">def</span> <span class="nf">is_alive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Used to check whether AMDA services are available or not.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-isAlive</span>
+<span class="sd">        :return: True if service is alive, False else</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="s1">&#39;isAlive.php&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">result_json</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">result_json</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;alive&#39;</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">and</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;alive&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.auth"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.auth">[docs]</a>    <span class="k">def</span> <span class="nf">auth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a token to use as an API parameter for get_dataset, get_orbites and get_parameter.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-auth</span>
+<span class="sd">        :return: Token string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="s1">&#39;auth.php&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_obs_data_tree"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_obs_data_tree">[docs]</a>    <span class="k">def</span> <span class="nf">get_obs_data_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides the hierarchy of public access data in AMDA.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getObsDataTree</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="s1">&#39;getObsDataTree.php&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result_xml</span> <span class="o">=</span> <span class="n">fromstring</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ParseError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">result_xml</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s1">&#39;LocalDataBaseParameters&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result_xml</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_dataset"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">get_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">stoptime</span><span class="p">,</span> <span class="n">datasetid</span><span class="p">,</span>
+                    <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">userid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fileformat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeformat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides data corresponding to a dataset chosen by the user among those available in AMDA</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getDataset</span>
+<span class="sd">        :param token: Token string obtained with auth method</span>
+<span class="sd">        :param starttime: Start time in ISO format (ex.: 2008-01-01T00:00:00)</span>
+<span class="sd">        :param stoptime: Stop time in ISO format (ex.: 2008-01-01T00:00:00)</span>
+<span class="sd">        :param datasetid: Dataset Id. Can be obtained thanks the use of get_obs_data_tree method</span>
+<span class="sd">        :param sampling: Optional. Define a sampling to apply to data</span>
+<span class="sd">        :param userid: Optional. User identifier. Usefull to access to non-public dataset</span>
+<span class="sd">        :param password: Optional. User password. Usefull to access to non-public dataset</span>
+<span class="sd">        :param fileformat: Optional. Output file format.</span>
+<span class="sd">        Available file formats are defined in AMDAOutputFormat class (default ASCII).</span>
+<span class="sd">        :param timeformat: Optional. Output time format.</span>
+<span class="sd">        Available time formats are defined in AMDATimeFormat class (default ISO8601).</span>
+<span class="sd">        :param compression: Optional. Compression mode to apply to the output file.</span>
+<span class="sd">        Available compression modes are defined in AMDAOutputCompression (default 0)</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;token&#39;</span><span class="p">:</span> <span class="n">token</span><span class="p">,</span>
+            <span class="s1">&#39;startTime&#39;</span><span class="p">:</span> <span class="n">starttime</span><span class="p">,</span>
+            <span class="s1">&#39;stopTime&#39;</span><span class="p">:</span> <span class="n">stoptime</span><span class="p">,</span>
+            <span class="s1">&#39;datasetID&#39;</span><span class="p">:</span> <span class="n">datasetid</span>
+        <span class="p">}</span>
+
+        <span class="n">optional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;sampling&#39;</span><span class="p">:</span> <span class="n">sampling</span><span class="p">,</span>
+            <span class="s1">&#39;userID&#39;</span><span class="p">:</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">password</span><span class="p">,</span>
+            <span class="s1">&#39;outputFormat&#39;</span><span class="p">:</span> <span class="n">fileformat</span><span class="p">,</span>
+            <span class="s1">&#39;timeFormat&#39;</span><span class="p">:</span> <span class="n">timeformat</span><span class="p">,</span>
+            <span class="s1">&#39;gzip&#39;</span><span class="p">:</span> <span class="n">compression</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="s1">&#39;getDataset.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__merge_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">optional_params</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">result_json</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result_json</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;success&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">])</span> \
+                <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;dataFileURLs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_orbites"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_orbites">[docs]</a>    <span class="k">def</span> <span class="nf">get_orbites</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">stoptime</span><span class="p">,</span> <span class="n">spacecraft</span><span class="p">,</span> <span class="n">coordsys</span><span class="p">,</span>
+                    <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">userid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fileformat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeformat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides the trajectory of a spacecraft during a period of time.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getOrbites</span>
+<span class="sd">        :param token: Token string obtained with auth method</span>
+<span class="sd">        :param starttime: Start time in ISO format (ex.: 2008-01-01T00:00:00)</span>
+<span class="sd">        :param stoptime: Stop time in ISO format (ex.: 2008-01-01T00:00:00)</span>
+<span class="sd">        :param spacecraft: Spacecraft name.</span>
+<span class="sd">        Available scacecrafts are defined in AMDASpaceCraft class</span>
+<span class="sd">        :param coordsys: Ouptut coordinates system</span>
+<span class="sd">        Available coordinates systems are defined in AMDACoordinatesSystem class</span>
+<span class="sd">        :param sampling: Optional. Define a sampling to apply to data</span>
+<span class="sd">        :param units: Units for output data</span>
+<span class="sd">        Available units are defined in AMDAOrbitUnit class. Default: km</span>
+<span class="sd">        :param userid: Optional. User identifier. Usefull to access to non-public dataset</span>
+<span class="sd">        :param password: Optional. User password. Usefull to access to non-public dataset</span>
+<span class="sd">        :param fileformat: Optional. Output file format.</span>
+<span class="sd">        Available file formats are defined in AMDAOutputFormat class (default ASCII).</span>
+<span class="sd">        :param timeformat: Optional. Output time format.</span>
+<span class="sd">        Available time formats are defined in AMDATimeFormat class (default ISO8601).</span>
+<span class="sd">        :param compression: Optional. Compression mode to apply to the output file.</span>
+<span class="sd">        Available compression modes are defined in AMDAOutputCompression (default 0)</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;token&#39;</span><span class="p">:</span> <span class="n">token</span><span class="p">,</span>
+            <span class="s1">&#39;startTime&#39;</span><span class="p">:</span> <span class="n">starttime</span><span class="p">,</span>
+            <span class="s1">&#39;stopTime&#39;</span><span class="p">:</span> <span class="n">stoptime</span><span class="p">,</span>
+            <span class="s1">&#39;spacecraft&#39;</span><span class="p">:</span> <span class="n">spacecraft</span><span class="p">,</span>
+            <span class="s1">&#39;CoordinateSystem&#39;</span><span class="p">:</span> <span class="n">coordsys</span>
+        <span class="p">}</span>
+
+        <span class="n">optional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;sampling&#39;</span><span class="p">:</span> <span class="n">sampling</span><span class="p">,</span>
+            <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="n">units</span><span class="p">,</span>
+            <span class="s1">&#39;userID&#39;</span><span class="p">:</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">password</span><span class="p">,</span>
+            <span class="s1">&#39;outputFormat&#39;</span><span class="p">:</span> <span class="n">fileformat</span><span class="p">,</span>
+            <span class="s1">&#39;timeFormat&#39;</span><span class="p">:</span> <span class="n">timeformat</span><span class="p">,</span>
+            <span class="s1">&#39;gzip&#39;</span><span class="p">:</span> <span class="n">compression</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;getOrbites.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__merge_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">optional_params</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">result_json</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result_json</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;success&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">])</span> \
+                <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;dataFileURLs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_parameter_list"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_parameter_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameter_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">local</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides the hierarchy of derived parameters belonging to a user and parameters in AMDA.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getParameterList</span>
+<span class="sd">        :param userid: Optional. User identifier. Usefull to access to non-public dataset</span>
+<span class="sd">        :param password: Optional. User password. Usefull to access to non-public dataset</span>
+<span class="sd">        :param local: True to retrieve the local database parameters or False to retrieve derived parameters of &#39;userid&#39;</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">optional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;userID&#39;</span><span class="p">:</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">password</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;getParameterList.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__merge_params</span><span class="p">({},</span> <span class="n">optional_params</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">local</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;&lt;LocalDataBaseParameters&gt;(.*?)&lt;/LocalDataBaseParameters&gt;&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;&lt;UserDefinedParameters&gt;(.*?)&lt;/UserDefinedParameters&gt;&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_parameter"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_parameter">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">stoptime</span><span class="p">,</span> <span class="n">paramid</span><span class="p">,</span>
+                      <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">userid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fileformat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeformat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides data corresponding to a parameter chosen by the user among those available in AMDA</span>
+<span class="sd">        (common or user defined parameters).</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getParameter</span>
+<span class="sd">        :param token: Token string obtained with auth method</span>
+<span class="sd">        :param starttime: Start time in ISO format (ex.: 2008-01-01T00:00:00)</span>
+<span class="sd">        :param stoptime: Stop time in ISO format (ex.: 2008-01-01T00:00:00)</span>
+<span class="sd">        :param paramid: Identifier of the parameter. Can be retrieve thanks the use of get_parameter_list method</span>
+<span class="sd">        :param sampling: Optional. Define a sampling to apply to data</span>
+<span class="sd">        :param userid: Optional. User identifier. Usefull to access to non-public dataset</span>
+<span class="sd">        :param password: Optional. User password. Usefull to access to non-public dataset</span>
+<span class="sd">        :param fileformat: Optional. Output file format.</span>
+<span class="sd">        Available file formats are defined in AMDAOutputFormat class (default ASCII).</span>
+<span class="sd">        :param timeformat: Optional. Output time format.</span>
+<span class="sd">        Available time formats are defined in AMDATimeFormat class (default ISO8601).</span>
+<span class="sd">        :param compression: Optional. Compression mode to apply to the output file.</span>
+<span class="sd">        Available compression modes are defined in AMDAOutputCompression (default 0)</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;token&#39;</span><span class="p">:</span> <span class="n">token</span><span class="p">,</span>
+            <span class="s1">&#39;startTime&#39;</span><span class="p">:</span> <span class="n">starttime</span><span class="p">,</span>
+            <span class="s1">&#39;stopTime&#39;</span><span class="p">:</span> <span class="n">stoptime</span><span class="p">,</span>
+            <span class="s1">&#39;parameterID&#39;</span><span class="p">:</span> <span class="n">paramid</span>
+        <span class="p">}</span>
+
+        <span class="n">optional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;sampling&#39;</span><span class="p">:</span> <span class="n">sampling</span><span class="p">,</span>
+            <span class="s1">&#39;userID&#39;</span><span class="p">:</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">password</span><span class="p">,</span>
+            <span class="s1">&#39;outputFormat&#39;</span><span class="p">:</span> <span class="n">fileformat</span><span class="p">,</span>
+            <span class="s1">&#39;timeFormat&#39;</span><span class="p">:</span> <span class="n">timeformat</span><span class="p">,</span>
+            <span class="s1">&#39;gzip&#39;</span><span class="p">:</span> <span class="n">compression</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;getParameter.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__merge_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">optional_params</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">result_json</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result_json</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;success&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;status&#39;</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;in progress&#39;</span><span class="p">):</span>
+            <span class="c1">#In batch mode</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="c1">#Wait for 30 seconds</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_status</span><span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+                <span class="k">elif</span> <span class="n">result</span> <span class="o">==</span> <span class="s1">&#39;in progress&#39;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;dataFileURLs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_status"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_status">[docs]</a>    <span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">processid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current status of the request according to a process ID.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getStatus</span>
+<span class="sd">        :param processid: Process identifier</span>
+<span class="sd">        :return: URL of result file if done. &#39;in progress&#39; if not finished. None in case of error</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">processid</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;getStatus.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">result_json</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result_json</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;success&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;status&#39;</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;in progress&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s1">&#39;in progress&#39;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;dataFileURLs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result_json</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result_json</span><span class="p">[</span><span class="s1">&#39;dataFileURLs&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_timetable_list"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_timetable_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_timetable_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides the private list of Time Tables (Time Table or TT) owned by a user.</span>
+<span class="sd">        When called without userid, this web-service returns the list of shared Time Tables.</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getTimeTablesList</span>
+<span class="sd">        :param userid: Optional. User identifier. Usefull to access to non-public dataset</span>
+<span class="sd">        :param password: Optional. User password. Usefull to access to non-public dataset</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">optional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;userID&#39;</span><span class="p">:</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">password</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;getTimeTablesList.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__merge_params</span><span class="p">({},</span> <span class="n">optional_params</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">text</span></div>
+
+<div class="viewcode-block" id="AMDARESTClient.get_timetable"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.AMDARESTClient.get_timetable">[docs]</a>    <span class="k">def</span> <span class="nf">get_timetable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ttid</span><span class="p">,</span> <span class="n">userid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provides the contents of a Time Table (TT).</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getTimeTable</span>
+<span class="sd">        :param ttid: TT or catalog identifier. Can be retrieve thanks the use of get_timetable_list method</span>
+<span class="sd">        http://amda.irap.omp.eu/help/apidoc/#api-webservices-getTimeTable</span>
+<span class="sd">        :param userid: Optional. User identifier. Usefull to access to non-public dataset</span>
+<span class="sd">        :param password: Optional. User password. Usefull to access to non-public dataset</span>
+<span class="sd">        :return: Url string or None if failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;ttID&#39;</span><span class="p">:</span> <span class="n">ttid</span>
+        <span class="p">}</span>
+
+        <span class="n">optional_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;userID&#39;</span><span class="p">:</span> <span class="n">userid</span><span class="p">,</span>
+            <span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="n">password</span>
+        <span class="p">}</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_request</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;getTimeTable.php&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__merge_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">optional_params</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span> <span class="ow">or</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">text</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">__merge_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">optional_params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">optional_params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}}</span>
+
+    <span class="k">def</span> <span class="nf">__get_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__proxies</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">proxies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__proxies</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">trust_env</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__entry_point</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">method</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+<span class="n">DATE_FORMAT</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S&quot;</span>
+<span class="n">DATE_FORMATZ</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">&quot;</span>
+<div class="viewcode-block" id="get_parameter"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.get_parameter">[docs]</a><span class="k">def</span> <span class="nf">get_parameter</span><span class="p">(</span><span class="n">param_id</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">stop_date</span><span class="p">,</span> <span class="n">col_names</span><span class="p">,</span> <span class="n">date_parser</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span><span class="n">stop_date</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">AMDARESTClient</span><span class="p">()</span>
+    <span class="n">t</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">auth</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error getting authentification token&quot;</span><span class="p">)</span>
+      <span class="k">return</span>
+    <span class="n">pfu</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="p">,</span><span class="n">param_id</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">urlparse</span><span class="p">(</span><span class="n">pfu</span><span class="p">)</span>
+    <span class="n">data_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">pfu</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
+    <span class="n">dparser</span><span class="o">=</span><span class="n">date_parser</span>
+    <span class="k">if</span> <span class="n">dparser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dparser</span><span class="o">=</span><span class="n">common_date_parser</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_file</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;#&quot;</span><span class="p">,</span><span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;\s+&quot;</span><span class="p">,</span><span class="n">names</span><span class="o">=</span><span class="n">col_names</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Time&quot;</span><span class="p">],</span> <span class="n">date_parser</span><span class="o">=</span><span class="n">dparser</span><span class="p">)</span></div>
+<div class="viewcode-block" id="get_dataset"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.get_dataset">[docs]</a><span class="k">def</span> <span class="nf">get_dataset</span><span class="p">(</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">stop_date</span><span class="p">,</span> <span class="n">date_parser</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="o">=</span><span class="n">start_date</span><span class="p">,</span><span class="n">stop_date</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">DATE_FORMAT</span><span class="p">)</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">AMDARESTClient</span><span class="p">()</span>
+    <span class="n">t</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">auth</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error getting authentification token&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">pfu</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="p">,</span><span class="n">dataset_id</span><span class="p">)</span>
+    <span class="n">a</span><span class="o">=</span><span class="n">urlparse</span><span class="p">(</span><span class="n">pfu</span><span class="p">)</span>
+    <span class="n">data_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">pfu</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_file</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;#&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;\s+&quot;</span><span class="p">)</span></div>
+<div class="viewcode-block" id="common_date_parser"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.common_date_parser">[docs]</a><span class="k">def</span> <span class="nf">common_date_parser</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">DATE_FORMATZ</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">DATE_FORMATZ</span><span class="p">)</span></div>
+<div class="viewcode-block" id="get_obs_tree"><a class="viewcode-back" href="../../../amdapy.html#amdapy.amdaWSClient.client.get_obs_tree">[docs]</a><span class="k">def</span> <span class="nf">get_obs_tree</span><span class="p">():</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">AMDARESTClient</span><span class="p">()</span>
+    <span class="n">t</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">auth</span><span class="p">()</span>
+    <span class="n">url</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">get_obs_data_tree</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">=</span><span class="n">etree</span><span class="o">.</span><span class="n">XMLParser</span><span class="p">(</span><span class="n">recover</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ObsTree</span><span class="p">(</span><span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">),</span> <span class="n">parser</span><span class="o">=</span><span class="n">parser</span><span class="p">))</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Alexandre Schulz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

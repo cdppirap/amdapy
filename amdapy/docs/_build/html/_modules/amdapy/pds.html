@@ -1,0 +1,696 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>amdapy.pds &#8212; amdapy 1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for amdapy.pds</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:author: Alexandre Schulz</span>
+<span class="sd">:email: alexandre.schulz@irap.omp.eu</span>
+<span class="sd">:file: pds.py</span>
+<span class="sd">:brief: Classes and functions for managing access to data stored by PDS</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">amdapy.str_utils</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="c1">## PDS ASCII file tags</span>
+<span class="n">PDS_END_TAG</span><span class="o">=</span><span class="s2">&quot;END&quot;</span>
+<span class="n">NEWLINE</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+<span class="n">ASSIGNMENT</span><span class="o">=</span><span class="s2">&quot;=&quot;</span>
+<span class="n">STRBEG</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+
+<span class="n">PDS_DATETIME</span><span class="o">=</span><span class="s2">&quot;TIME&quot;</span>
+<span class="n">PDS_DATETIME_FORMAT</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">Z&quot;</span>
+<span class="n">PDS_FLOAT</span><span class="o">=</span><span class="s2">&quot;ASCII_REAL&quot;</span>
+<span class="n">PDS_INT</span><span class="o">=</span><span class="s2">&quot;ASCII_INTEGER&quot;</span>
+<span class="n">PDS_FIELD_NAME</span><span class="o">=</span><span class="s2">&quot;NAME&quot;</span>
+<span class="n">PDS_FIELD_COLNUM</span><span class="o">=</span><span class="s2">&quot;COLUMN_NUMBER&quot;</span>
+<span class="n">PDS_FIELD_UNIT</span><span class="o">=</span><span class="s2">&quot;UNIT&quot;</span>
+<span class="n">PDS_FIELD_DATATYPE</span><span class="o">=</span><span class="s2">&quot;DATA_TYPE&quot;</span>
+<span class="n">PDS_FIELD_FILLVAL</span><span class="o">=</span><span class="s2">&quot;MISSING_CONSTANT&quot;</span>
+
+<span class="n">PDS_ERR_MISSING_LABEL_FILE</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">PDS_ERR_MISSING_DATA_FILE</span><span class="o">=</span><span class="mi">3</span>
+
+<span class="c1">## PDSObject class documentation.</span>
+<span class="c1">#</span>
+<span class="c1">#  This class is used to represent the PDS label objects.</span>
+<div class="viewcode-block" id="PDSObject"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject">[docs]</a><span class="k">class</span> <span class="nc">PDSObject</span><span class="p">:</span>
+  <span class="sd">&quot;&quot;&quot;PDSObject class definition. This is the base class for representing PDS ASCII header data</span>
+
+<span class="sd">  :param name: name of the object</span>
+<span class="sd">  :type name: str</span>
+<span class="sd">  :param value: value of the parameter</span>
+<span class="sd">  :type value: ?</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Object initialization</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">## Object name.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">name</span>
+    <span class="c1">## Object value.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">=</span><span class="n">value</span>
+<div class="viewcode-block" id="PDSObject.summary"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.summary">[docs]</a>  <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print summary of current object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_attribute</span><span class="p">():</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Attribute </span><span class="si">{}</span><span class="s2"> : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Object type : &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">child</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSObject.get"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.get">[docs]</a>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get object attribute by name</span>
+
+<span class="sd">    :param name: name of the desired attribute</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :return: value of the attribute corresponding to :data:`name`</span>
+<span class="sd">    :rtype: value type</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_object</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">is_attribute</span><span class="p">():</span>
+          <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">value</span></div>
+<div class="viewcode-block" id="PDSObject.type"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.type">[docs]</a>  <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get type of current PDSObject</span>
+
+<span class="sd">    :return: type of the current object</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_object</span><span class="p">():</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">return</span> <span class="s2">&quot;att&quot;</span></div>
+<div class="viewcode-block" id="PDSObject.is_type"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.is_type">[docs]</a>  <span class="k">def</span> <span class="nf">is_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if object is of type :data:`type`</span>
+
+<span class="sd">    :param t: type</span>
+<span class="sd">    :type t: str</span>
+<span class="sd">    :return: True if current object is of type :data:`t`, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="n">t</span></div>
+<div class="viewcode-block" id="PDSObject.is_attribute"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.is_attribute">[docs]</a>  <span class="k">def</span> <span class="nf">is_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if current object is an attribute</span>
+<span class="sd">    </span>
+<span class="sd">    :return: True is current object is an attribute, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSObject.is_object"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.is_object">[docs]</a>  <span class="k">def</span> <span class="nf">is_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if current object is an PDS Object.</span>
+
+<span class="sd">    :param t: type, optional</span>
+<span class="sd">    :type t: str</span>
+<span class="sd">    :return: True is current object is a PDS Object, False otherwise</span>
+<span class="sd">    :rtype: boolA</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="n">t</span></div>
+<div class="viewcode-block" id="PDSObject.valid"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.valid">[docs]</a>  <span class="k">def</span> <span class="nf">valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if the current object is valid</span>
+
+<span class="sd">    :return: True if object is valid, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_attribute</span><span class="p">():</span>
+      <span class="k">return</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">att</span><span class="o">.</span><span class="n">valid</span><span class="p">():</span>
+          <span class="k">return</span> <span class="kc">False</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_end</span><span class="p">()</span> </div>
+<div class="viewcode-block" id="PDSObject.has_end"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.has_end">[docs]</a>  <span class="k">def</span> <span class="nf">has_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if the current object has an end tag.</span>
+
+<span class="sd">    :return: True if current object has an end tag, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_attribute</span><span class="p">():</span>
+      <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">att</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s2">&quot;END_OBJECT&quot;</span> <span class="ow">and</span> <span class="n">att</span><span class="o">.</span><span class="n">value</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+<div class="viewcode-block" id="PDSObject.next"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.next">[docs]</a>  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">input_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse next PDSObject</span>
+
+<span class="sd">    :param input_str: input that we want to parse</span>
+<span class="sd">    :type input_str: str</span>
+<span class="sd">    :return: next available PDSOject and rest of string to be parsed</span>
+<span class="sd">    :rtype: tuple (amdapy.pds.PDSObject, str)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">PDSObject</span><span class="p">(),</span><span class="n">input_str</span></div>
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">n_indent</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;String representation of the current object</span>
+
+<span class="sd">    :param n_indent: number of indentation characters that will be inserted in front of each line</span>
+<span class="sd">    :type n_indent: int</span>
+<span class="sd">    :return: string representation of the current object</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">PDSObject(name=</span><span class="si">{}</span><span class="s2">,value=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_indent</span><span class="o">*</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+      <span class="n">a</span><span class="o">=</span><span class="n">a</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">att</span><span class="o">.</span><span class="fm">__str__</span><span class="p">(</span><span class="n">n_indent</span><span class="o">=</span><span class="n">n_indent</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span>
+<div class="viewcode-block" id="PDSObject.add_attribute"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.add_attribute">[docs]</a>  <span class="k">def</span> <span class="nf">add_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attribute</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add attribute to current object</span>
+
+<span class="sd">    :param attribute: attribute we wish to add.</span>
+<span class="sd">    :type attribute: amdapy.pds.PDSAttribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSObject.iter_object"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.iter_object">[docs]</a>  <span class="k">def</span> <span class="nf">iter_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator over PDSOjects</span>
+
+<span class="sd">    :param t: type of object, optional, default behaviour iterates over all objects</span>
+<span class="sd">    :type t: str</span>
+<span class="sd">    :return: yields all PDSObject objects</span>
+<span class="sd">    :rtype: amdapy.pds.PDSObject</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_object</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">is_object</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+          <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">o</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">is_type</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+              <span class="k">yield</span> <span class="n">o</span>
+          <span class="k">for</span> <span class="n">so</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">iter_object</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">so</span></div>
+<div class="viewcode-block" id="PDSObject.iter"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.iter">[docs]</a>  <span class="k">def</span> <span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over children</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_object</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">child</span></div>
+<div class="viewcode-block" id="PDSObject.iter_attribute"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSObject.iter_attribute">[docs]</a>  <span class="k">def</span> <span class="nf">iter_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over current object attributes</span>
+
+<span class="sd">    :return: current object attributes</span>
+<span class="sd">    :rtype: amdapy.pds.PDSAttribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_object</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">is_attribute</span><span class="p">():</span>
+          <span class="k">yield</span> <span class="n">c</span></div></div>
+
+<div class="viewcode-block" id="PDSAttribute"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSAttribute">[docs]</a><span class="k">class</span> <span class="nc">PDSAttribute</span><span class="p">(</span><span class="n">PDSObject</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Base class for representing PDS ASCII dataset header attributes</span>
+<span class="sd">  </span>
+<span class="sd">  :param name: name of the attribute, optional , default is None</span>
+<span class="sd">  :type name: None or str</span>
+<span class="sd">  :param value: value of the attribute</span>
+<span class="sd">  :type value: value type</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Object constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">## Attribute name.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">=</span><span class="n">name</span>
+    <span class="c1">## Attribute value.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">=</span><span class="n">value</span>
+<div class="viewcode-block" id="PDSAttribute.summary"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSAttribute.summary">[docs]</a>  <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print summary of current object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;attribute : &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSAttribute.valid"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSAttribute.valid">[docs]</a>  <span class="k">def</span> <span class="nf">valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if current attribute is valid</span>
+<span class="sd">    </span>
+<span class="sd">    :return: True is the attribute is valid (:data:`name` and :data:`value` are not None)</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="n">PDS_END_TAG</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span></div>
+<div class="viewcode-block" id="PDSAttribute.is_equal"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSAttribute.is_equal">[docs]</a>  <span class="k">def</span> <span class="nf">is_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check equality between current attribute and another</span>
+
+<span class="sd">    :param attr: other attribute to compare with</span>
+<span class="sd">    :type attr: amdapy.pds.PDSAttribute</span>
+<span class="sd">    :return: True if both attributes have same name and value, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">attr</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="n">attr</span><span class="o">.</span><span class="n">value</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span></div>
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">n_indent</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;String representation of the current object</span>
+
+<span class="sd">    :param n_indent: number of indentation characters that will be added to begining of each line, optional, default is 0</span>
+<span class="sd">    :type n_indent: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">PDSAttribute(name=</span><span class="si">{}</span><span class="s2">,value=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_indent</span><span class="o">*</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<div class="viewcode-block" id="PDSAttribute.fromstring"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSAttribute.fromstring">[docs]</a>  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">fromstring</span><span class="p">(</span><span class="n">in_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an attribute from string input</span>
+
+<span class="sd">    :param in_str: input string that we want to parse</span>
+<span class="sd">    :type in_str: str</span>
+<span class="sd">    :return: New attribute if valid, None otherwise</span>
+<span class="sd">    :rtype: None or amdapy.pds.PDSAttribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ASSIGNMENT</span> <span class="ow">in</span> <span class="n">in_str</span><span class="p">:</span>
+      <span class="n">as_pos</span><span class="o">=</span><span class="n">in_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">ASSIGNMENT</span><span class="p">)</span>
+      <span class="n">name</span><span class="o">=</span><span class="n">in_str</span><span class="p">[:</span><span class="n">as_pos</span><span class="p">]</span>
+      <span class="n">val</span><span class="o">=</span><span class="n">in_str</span><span class="p">[</span><span class="n">as_pos</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+      <span class="n">name</span><span class="o">=</span><span class="n">str_rem_ends</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+      <span class="n">val</span><span class="o">=</span><span class="n">str_rem_ends</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+      <span class="k">if</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+        <span class="c1">#val=val.replace(&quot;\n&quot;,&quot; &quot;)</span>
+        <span class="n">val</span><span class="o">=</span><span class="n">str_rem_successive</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">val</span><span class="o">=</span><span class="n">str_rem_ends</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">PDSAttribute</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">PDSAttribute</span><span class="p">()</span></div>
+<div class="viewcode-block" id="PDSAttribute.next"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSAttribute.next">[docs]</a>  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="n">in_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse next PDSAttributre object from string</span>
+
+<span class="sd">    :param in_str: input string we wish to parse</span>
+<span class="sd">    :type in_str: str</span>
+<span class="sd">    :return: next object if valid, None otherwise</span>
+<span class="sd">    :rtype: amdapy.pds.PDSAttribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get position of next line and next assignment</span>
+    <span class="n">nl_pos</span><span class="o">=</span><span class="n">in_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">NEWLINE</span><span class="p">)</span>
+    <span class="n">as_pos</span><span class="o">=</span><span class="n">in_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">ASSIGNMENT</span><span class="p">)</span>
+    <span class="c1"># if no newline</span>
+    <span class="k">if</span> <span class="n">nl_pos</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># if there is an assignment</span>
+      <span class="k">return</span> <span class="n">PDSAttribute</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">in_str</span><span class="p">),</span><span class="s2">&quot;&quot;</span>
+    <span class="c1"># get the first line of input data</span>
+    <span class="n">line</span><span class="o">=</span><span class="n">in_str</span><span class="p">[:</span><span class="n">nl_pos</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">as_pos</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+      <span class="c1"># if there are no assignments</span>
+      <span class="k">return</span> <span class="n">PDSAttribute</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">line</span><span class="p">),</span><span class="n">in_str</span><span class="p">[</span><span class="n">nl_pos</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="n">as_pos</span><span class="o">&lt;</span><span class="n">nl_pos</span><span class="p">:</span>
+      <span class="c1"># if first line contains an assignment</span>
+      <span class="k">if</span> <span class="n">in_str</span><span class="p">[</span><span class="n">as_pos</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">:</span>
+        <span class="c1"># assigning a string value, line ends at second occurence of &quot;</span>
+        <span class="n">val_beg</span><span class="o">=</span><span class="n">in_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">line_end</span><span class="o">=</span><span class="n">in_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">,</span><span class="n">val_beg</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">line</span><span class="o">=</span><span class="n">in_str</span><span class="p">[:</span><span class="n">line_end</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">PDSAttribute</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">line</span><span class="p">),</span> <span class="n">in_str</span><span class="p">[</span><span class="n">line_end</span><span class="p">:]</span>
+      <span class="k">elif</span> <span class="n">in_str</span><span class="p">[</span><span class="n">as_pos</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;(&quot;</span><span class="p">:</span>
+        <span class="n">line_end</span><span class="o">=</span><span class="n">in_str</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">line</span><span class="o">=</span><span class="n">in_str</span><span class="p">[:</span><span class="n">line_end</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">PDSAttribute</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">line</span><span class="p">),</span><span class="n">in_str</span><span class="p">[</span><span class="n">line_end</span><span class="p">:]</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">PDSAttribute</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">line</span><span class="p">),</span><span class="n">in_str</span><span class="p">[</span><span class="n">nl_pos</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">PDSAttribute</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">line</span><span class="p">),</span><span class="n">in_str</span><span class="p">[</span><span class="n">nl_pos</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span></div></div>
+
+<div class="viewcode-block" id="PDSLabel"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel">[docs]</a><span class="k">class</span> <span class="nc">PDSLabel</span><span class="p">:</span>
+  <span class="sd">&quot;&quot;&quot;Container class for PDSLabel objects</span>
+
+<span class="sd">  :param label_filename: path to the PDS dataset label file</span>
+<span class="sd">  :type label_filename: str</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">label_filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Object constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">label_filename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">column_index_map</span><span class="o">=</span><span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">set_column_index_map</span><span class="p">()</span>
+<div class="viewcode-block" id="PDSLabel.set_column_index_map"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.set_column_index_map">[docs]</a>  <span class="k">def</span> <span class="nf">set_column_index_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set the mapping between desired column names to the original column names</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prev_index</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_column</span><span class="p">():</span>
+      <span class="n">temp_name</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">)</span>
+      <span class="n">temp_items</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ITEMS&quot;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">temp_items</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">temp_items</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">temp_items</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_index_map</span><span class="p">[</span><span class="n">temp_name</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="n">prev_index</span><span class="o">+</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">temp_items</span><span class="p">)]</span>
+        <span class="n">prev_index</span><span class="o">=</span><span class="mi">1</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">column_index_map</span><span class="p">[</span><span class="n">temp_name</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_index_map</span><span class="p">[</span><span class="n">temp_name</span><span class="p">]</span><span class="o">=</span><span class="n">prev_index</span>
+        <span class="n">prev_index</span><span class="o">=</span><span class="n">prev_index</span><span class="o">+</span><span class="mi">1</span></div>
+<div class="viewcode-block" id="PDSLabel.summary"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.summary">[docs]</a>  <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print summary of the current object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PDS Label file&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;columns : &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_count</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_column</span><span class="p">():</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">column : &quot;</span><span class="p">,</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">))</span></div>
+<div class="viewcode-block" id="PDSLabel.column_count"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.column_count">[docs]</a>  <span class="k">def</span> <span class="nf">column_count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Count the column objects</span>
+
+<span class="sd">    :return: number of column objects</span>
+<span class="sd">    :rtype: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_object</span><span class="p">(</span><span class="s2">&quot;COLUMN&quot;</span><span class="p">):</span>
+      <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="o">+</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">count</span></div>
+<div class="viewcode-block" id="PDSLabel.iter_object"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.iter_object">[docs]</a>  <span class="k">def</span> <span class="nf">iter_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator over objects</span>
+
+<span class="sd">    :param t: desired object type</span>
+<span class="sd">    :type t: str</span>
+<span class="sd">    :return: objects of the desired type, default is to yield all objects</span>
+<span class="sd">    :rtype: amdapy.pds.PDSObject</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">is_object</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="k">yield</span> <span class="n">o</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">is_type</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">o</span>
+        <span class="k">for</span> <span class="n">so</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">iter_object</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+          <span class="k">yield</span> <span class="n">so</span></div>
+<div class="viewcode-block" id="PDSLabel.parse"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.parse">[docs]</a>  <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse a PDS label file</span>
+
+<span class="sd">    :param filename: path to the label filename</span>
+<span class="sd">    :type filename: str</span>
+<span class="sd">    :return: PDSLabel object</span>
+<span class="sd">    :rtype: amdapy.pds.PDSLabel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">s</span><span class="o">=</span><span class="n">readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+      <span class="n">obj</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> 
+      <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">valid</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSLabel.iter_column"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.iter_column">[docs]</a>  <span class="k">def</span> <span class="nf">iter_column</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over column objects</span>
+
+<span class="sd">    :return: columns objects</span>
+<span class="sd">    :rtype: amdapy.pds.PDSObject</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_object</span><span class="p">(</span><span class="s2">&quot;COLUMN&quot;</span><span class="p">):</span>
+      <span class="k">yield</span> <span class="n">c</span></div>
+<div class="viewcode-block" id="PDSLabel.next"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.next">[docs]</a>  <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">in_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse new PDS label file object</span>
+<span class="sd">    </span>
+<span class="sd">    :param in_str: string we wish to parse</span>
+<span class="sd">    :type in_str: str</span>
+<span class="sd">    :return: next PDSObject</span>
+<span class="sd">    :rtype: amdapy.pds.PDSObject</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># first get next PDSAttribute object</span>
+    <span class="n">obj</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">PDSAttribute</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">in_str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s2">&quot;OBJECT&quot;</span><span class="p">:</span>
+      <span class="n">no</span><span class="o">=</span><span class="n">PDSObject</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">value</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="p">[])</span>
+      <span class="k">while</span> <span class="ow">not</span> <span class="n">no</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">obj</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">valid</span><span class="p">():</span>
+          <span class="n">no</span><span class="o">.</span><span class="n">add_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">no</span><span class="p">,</span><span class="n">s</span>
+    <span class="k">return</span> <span class="n">obj</span><span class="p">,</span><span class="n">s</span></div>
+<div class="viewcode-block" id="PDSLabel.find_column_by_name"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSLabel.find_column_by_name">[docs]</a>  <span class="k">def</span> <span class="nf">find_column_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">col_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find a column by name</span>
+<span class="sd">    </span>
+<span class="sd">    :param col_name: name of the column</span>
+<span class="sd">    :type col_name: str</span>
+<span class="sd">    :return: Column object is exists, None otherwise</span>
+<span class="sd">    :rtype: PDSObject or None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_column</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">)</span><span class="o">==</span><span class="n">col_name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">col</span></div></div>
+
+<div class="viewcode-block" id="PDSDataset"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset">[docs]</a><span class="k">class</span> <span class="nc">PDSDataset</span><span class="p">:</span>
+  <span class="sd">&quot;&quot;&quot;PDSDataset documentation. This is the class we use to interface with PDS ASCII datasets.</span>
+
+<span class="sd">  :param label_filename: path the the PDS ASCII label file</span>
+<span class="sd">  :type label_filename: str</span>
+<span class="sd">  :param data_filename: path to the PDS ASCII table file</span>
+<span class="sd">  :type data_filename: str</span>
+<span class="sd">  :param table_sep: separation character used in the table file, optional, default is space</span>
+<span class="sd">  :type table_sep: str</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">label_filename</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">data_filename</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">table_sep</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Object constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">## Path to the label file.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">label_filename</span><span class="o">=</span><span class="n">label_filename</span>
+    <span class="c1">## Path to the data file.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data_filename</span><span class="o">=</span><span class="n">data_filename</span>
+    <span class="c1">## Data container.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">data_filename</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="n">table_sep</span><span class="p">)</span>
+    <span class="c1">## Label data.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">=</span><span class="n">PDSLabel</span><span class="p">(</span><span class="n">label_filename</span><span class="o">=</span><span class="n">label_filename</span><span class="p">)</span>
+<div class="viewcode-block" id="PDSDataset.summary"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.summary">[docs]</a>  <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print dataset summary</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Label filename : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label_filename</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data filename  : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_filename</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data shape     : </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Columns :&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">():</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">col_name</span><span class="o">=</span><span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">PDS_FIELD_NAME</span><span class="p">)</span>
+        <span class="n">datatype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+        <span class="n">ind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">.</span><span class="n">column_index_map</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span>
+        <span class="n">t_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">column_data</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; </span><span class="si">{}</span><span class="s2">. </span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span><span class="n">col_name</span><span class="p">,</span><span class="n">datatype</span><span class="p">,</span><span class="n">t_data</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span></div>
+<div class="viewcode-block" id="PDSDataset.load_data"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.load_data">[docs]</a>  <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">filename</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load contents of the dataset from files</span>
+
+<span class="sd">    :param filename: path of the data file</span>
+<span class="sd">    :type filename: str</span>
+<span class="sd">    :param sep: separation character, optional, default is space</span>
+<span class="sd">    :type sep: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># load data from csv type file, separation characters are spaces</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">readfile</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">l</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sep</span><span class="p">)))</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">NEWLINE</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSDataset.shape"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.shape">[docs]</a>  <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get dataset shape</span>
+<span class="sd">    </span>
+<span class="sd">    :return: shape of the dataset data</span>
+<span class="sd">    :rtype: tuple of ints</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+<div class="viewcode-block" id="PDSDataset.columns"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.columns">[docs]</a>  <span class="k">def</span> <span class="nf">columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterator over columns</span>
+
+<span class="sd">    :return: columns objects</span>
+<span class="sd">    :rtype: amdapy.pds.PDSObject</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get columns index</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">.</span><span class="n">iter_column</span><span class="p">():</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">col</span></div>
+<div class="viewcode-block" id="PDSDataset.datetime_str_to_float"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.datetime_str_to_float">[docs]</a>  <span class="k">def</span> <span class="nf">datetime_str_to_float</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dt_str</span><span class="p">,</span><span class="n">scheme</span><span class="o">=</span><span class="n">PDS_DATETIME_FORMAT</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a string timestamp to datetime</span>
+
+<span class="sd">    :param dt_str: timestamp string</span>
+<span class="sd">    :type dt_str: str</span>
+<span class="sd">    :param scheme: formating string (as used by datetime.strptime)</span>
+<span class="sd">    :type scheme: str</span>
+<span class="sd">    :return: datetime object corresponding to input timestamp</span>
+<span class="sd">    :rtype: datetime.datetime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">e</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">dt</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt_str</span><span class="p">,</span><span class="n">scheme</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">tts</span><span class="o">=</span><span class="p">(</span><span class="n">dt</span><span class="o">-</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">tts</span></div>
+<div class="viewcode-block" id="PDSDataset.column_data"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.column_data">[docs]</a>  <span class="k">def</span> <span class="nf">column_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">col_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get column data</span>
+
+<span class="sd">    :param col_name: name of the column whose data we want</span>
+<span class="sd">    :type col_name: str</span>
+<span class="sd">    :return: :data:`col_name` data, or None if column does not exist</span>
+<span class="sd">    :rtype: None or numpy.array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dt</span><span class="o">==</span><span class="s2">&quot;TIME&quot;</span><span class="p">:</span>
+      <span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">datetime_str_to_float</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="bp">self</span><span class="o">.</span><span class="n">column_index</span><span class="p">(</span><span class="n">col_name</span><span class="p">)]]</span>
+      <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">col</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">.</span><span class="n">find_column_by_name</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+      <span class="n">missing_constant</span><span class="o">=</span><span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MISSING_CONSTANT&quot;</span><span class="p">)</span>
+      <span class="n">temp_data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="bp">self</span><span class="o">.</span><span class="n">column_index</span><span class="p">(</span><span class="n">col_name</span><span class="p">)]</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)):</span>
+          <span class="k">if</span> <span class="n">temp_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">==</span><span class="n">missing_constant</span><span class="p">:</span>
+            <span class="n">temp_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;nan&quot;</span>
+          <span class="c1"># try converting value to float, if cannot then replace value by nan</span>
+          <span class="k">try</span><span class="p">:</span>
+            <span class="n">fv</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temp_data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+          <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unable to convert value </span><span class="si">{}</span><span class="s2"> to type np.float64&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temp_data</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">temp_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;nan&quot;</span>
+      <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temp_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">column_datatype</span><span class="p">(</span><span class="n">col_name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="bp">self</span><span class="o">.</span><span class="n">column_index</span><span class="p">(</span><span class="n">col_name</span><span class="p">)]</span></div>
+<div class="viewcode-block" id="PDSDataset.column_datatype"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.column_datatype">[docs]</a>  <span class="k">def</span> <span class="nf">column_datatype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">col_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get column datatype</span>
+
+<span class="sd">    :param col_name: column name</span>
+<span class="sd">    :type col_name: str</span>
+<span class="sd">    :return: datatype associated with the column</span>
+<span class="sd">    :rtype: type</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">col</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">.</span><span class="n">find_column_by_name</span><span class="p">(</span><span class="n">col_name</span><span class="p">)</span>
+    <span class="n">dt_str</span><span class="o">=</span><span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">PDS_FIELD_DATATYPE</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dt_str</span><span class="o">==</span><span class="n">PDS_FLOAT</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="k">if</span> <span class="n">dt_str</span><span class="o">==</span><span class="n">PDS_INT</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">intc</span>    
+    <span class="k">if</span> <span class="n">dt_str</span><span class="o">==</span><span class="n">PDS_DATETIME</span><span class="p">:</span>
+      <span class="k">return</span> <span class="s2">&quot;TIME&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING : datatype could not be found : &quot;</span> <span class="p">,</span> <span class="n">dt_str</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSDataset.column_index"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.column_index">[docs]</a>  <span class="k">def</span> <span class="nf">column_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">col_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get column index, if column has multiple dimensions then return a list of indexes</span>
+
+<span class="sd">    :param col_name: name of the column</span>
+<span class="sd">    :type col_name: str</span>
+<span class="sd">    :return: index of the column or None if column :data:`col_name` does not exist</span>
+<span class="sd">    :rtype: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">.</span><span class="n">column_index_map</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_data</span><span class="o">.</span><span class="n">iter_column</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">)</span><span class="o">==</span><span class="n">col_name</span><span class="p">:</span>
+        <span class="n">items_att</span><span class="o">=</span><span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ITEMS&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">items_att</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="n">first_index</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;COLUMN_NUMBER&quot;</span><span class="p">))</span><span class="o">-</span><span class="mi">1</span>
+          <span class="k">return</span> <span class="p">[</span><span class="n">first_index</span><span class="o">+</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">items_att</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;COLUMN_NUMBER&quot;</span><span class="p">))</span><span class="o">-</span><span class="mi">1</span></div>
+<div class="viewcode-block" id="PDSDataset.column_name_by_index"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.column_name_by_index">[docs]</a>  <span class="k">def</span> <span class="nf">column_name_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get column name from index</span>
+
+<span class="sd">    :param index: index</span>
+<span class="sd">    :type index: int</span>
+<span class="sd">    :return: :data:`index`-th columns name</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="p">():</span>
+      <span class="n">ind</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">column_index</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">ind</span><span class="o">==</span><span class="n">index</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">c</span></div>
+<div class="viewcode-block" id="PDSDataset.column_names"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.column_names">[docs]</a>  <span class="k">def</span> <span class="nf">column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Iterate over column names</span>
+
+<span class="sd">    :return: column names</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">():</span>
+      <span class="k">yield</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">PDS_FIELD_NAME</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSDataset.has_column"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.has_column">[docs]</a>  <span class="k">def</span> <span class="nf">has_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if dataset contains column named :data:`col_name`</span>
+
+<span class="sd">    :param col_name: column name</span>
+<span class="sd">    :type col_name: str</span>
+<span class="sd">    :return: True is current dataset contains a column named :data:`col_name`, False otherwise</span>
+<span class="sd">    :rtype: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">col_name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+<div class="viewcode-block" id="PDSDataset.time_column_name"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.time_column_name">[docs]</a>  <span class="k">def</span> <span class="nf">time_column_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the name of the column containing Time data</span>
+
+<span class="sd">    :return: column name</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="p">():</span>
+      <span class="k">if</span> <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">c</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+<div class="viewcode-block" id="PDSDataset.time_data"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.time_data">[docs]</a>  <span class="k">def</span> <span class="nf">time_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the Time data</span>
+
+<span class="sd">    :return: time data array</span>
+<span class="sd">    :rtype: numpy.array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">time_col_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_column_name</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">time_col_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_data</span><span class="p">(</span><span class="n">time_col_name</span><span class="p">)</span></div>
+<div class="viewcode-block" id="PDSDataset.timespan"><a class="viewcode-back" href="../../amdapy.html#amdapy.pds.PDSDataset.timespan">[docs]</a>  <span class="k">def</span> <span class="nf">timespan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">time_data</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Alexandre Schulz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>
