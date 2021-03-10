@@ -510,13 +510,13 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
       print("Error getting authentification token")
       return
     pfu=client.get_parameter(t,start,stop,param_id)
-    a=urlparse(pfu)
-    data_file=os.path.basename(a.path)
-    urllib.request.urlretrieve(pfu, data_file)
+    resp=requests.get(pfu)
     dparser=date_parser
     if dparser is None:
         dparser=common_date_parser
-    return pd.read_csv(data_file, comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+    data=pd.read_csv(io.StringIO(resp.text), comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+    #os.system("rm {}".format(data_file))
+    return data
 def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
@@ -529,10 +529,9 @@ def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
         print("Error getting authentification token")
         return
     pfu=client.get_dataset(t,start,stop,dataset_id)
-    a=urlparse(pfu)
-    data_file=os.path.basename(a.path)
-    urllib.request.urlretrieve(pfu, data_file)
-    return pd.read_csv(data_file, comment="#", header=None, sep="\s+")
+    resp=requests.get(pfu)
+    data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+")
+    return data
 def common_date_parser(x):
     if x.endswith("Z"):
         return datetime.datetime.strptime(x, DATE_FORMATZ)
