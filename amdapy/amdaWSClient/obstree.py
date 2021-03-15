@@ -2,6 +2,33 @@
 :file: obstree.py
 :author: Alexandre Schulz
 :brief: AMDA dataset tree representation.
+
+Using the :meth:`amdapy.amdaWSClient.client.get_obs_tree` method we can retrieve an XML file containing
+descriptions of all available datasets, and the parameters therein. The :class:`ObsTree` is used for 
+parsing the elements of the XML file and returning dataset and parameter descriptions. Since the 
+:package:`amdapy.amdaWSClient.client` module provides functions for retrieving *datasets* and *parameters*, 
+navigating the AMDA catalogue involves gathering descriptions of datasets and parameters. It is noted
+that in AMDA all datasets are timeseries. Although nothing specific to timeseries has yet been implemented
+it is good to keep this in mind.
+
+Datasets are described by :
+    - id, which is unique within AMDA
+    - name, as presented in the navigation tree on the AMDA web plateform
+    - mission name
+    - instrument name
+    - start datetime
+    - stop datetime
+    - list of parameters
+
+Parameter descriptions include :
+    - id, parameter ids are unique within AMDA
+    - name, as presented in the navigation tree on the AMDA web plateform
+    - display type, string indicating if the data should be presented as a plot or a spectrogram
+    - description, a description of the parameter
+    - units, units in which the parameter is expressed
+    - parent id, dataset id
+    - list of components if any. If no components then parameter is considered a scalar
+
 """
 import datetime
 
@@ -37,21 +64,41 @@ MISSIONDEPENDENT_DATE="MissionDependent"
 DATE_FORMAT="%Y-%m-%dT%H:%M:%SZ"
 
 def get_id(el):
+  """Get id of an element. Searches for an attribut {<namespace>}id and returns value
+
+  :return: id of the element, None if no :data:`id` attribute was found
+  :rtype: str or NoneType
+  """
   for k in el.attrib:
     if k.endswith("}id"):
       return el.attrib[k]
 
 class ComponentElement:
-  """ComponentElement class documentation. Represents a component XML element of the AMDA dataset tree
+  """Simple container class. Contains description of the parameters components. Store the id, name,
+  and index of the component.
+
+  :param el: XML element
+  :type el: lxml.etree._Element
   """
   def __init__(self,el):
+    """Object constructor
+    """
     self.id=get_id(el)
     self.name=el.get("name")
     self.index=el.get("Index1")
   def __str__(self):
-    return "ComponentEl(id:{},name:{},index:{})".format(self.id, self.name, self.index)
+    """Get a string representation of the current component object. 
+
+    :return: string representation of the component
+    :rtype: str
+    """
+    return "Component(id:{},name:{},index:{})".format(self.id, self.name, self.index)
 
 class ParameterElement:
+  """Container for storing parameter descriptions. This object is initialized by passing an XML element
+  whith the "parameter" tag and an id of the parent dataset. It allows acces to the parameters id,
+  name, units, description, displaytype, parent_dataset_id and a list of components
+"""
   def __init__(self, el, parent_id):
     self.id=get_id(el)
     self.name=el.get(NAME_ATTR)
@@ -74,12 +121,34 @@ class ParameterElement:
     :rtype: int
     """
     return len(self.components)
+  def size(self):
+    """Get number of components
 
+    :return: number of components
+    :rtype: int
+    """
+    return len(self.components)
+  def iter_component(self):
+    """Component iterator
+
+    :return: components one by one
+    :rtype: amdapy.amdaWSClient.obstree.ComponentElement
+    """
+    for c in self.components:
+      yield c
 class DatasetElement:
   def __init__(self,el):
     self.name=el.get(NAME_ATTR)
     self.datastart=el.get(DATASTART_ATTR)
     self.datastop=el.get(DATASTOP_ATTR)
+    try:
+      self.datastart=datetime.datetime.strptime(self.datastart, DATE_FORMAT)
+    except:
+      self.datastart=None
+    try:
+      self.datastop=datetime.datetime.strptime(self.datastop,DATE_FORMAT)
+    except:
+      self.datastop=None
     self.lastupdate=el.get(LASTUPDATE_ATTR)
     self.description=el.get(DESC_ATTR)
     self.datasource=el.get(DATASOURCE_ATTR)

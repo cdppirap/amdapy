@@ -14,7 +14,7 @@
 #
 # import os
 import sys
-sys.path.insert(0, "/home/aschulz")
+sys.path.insert(0, "/home/aschulz/amdapy")
 
 
 # -- Project information -----------------------------------------------------

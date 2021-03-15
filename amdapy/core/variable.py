@@ -34,9 +34,11 @@ class Variable:
     self.shape=shape
     self.dtype=dtype
     self.value=value
+    self.ndim=None
     if not self.value is None:
       self.shape=value.shape
       self.dtype=dtype
+      self.ndim=len(self.shape)
   def __getitem__(self, i):
     """Data getter
 

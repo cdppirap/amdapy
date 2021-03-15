@@ -6,8 +6,18 @@
 Welcome to amdapy's documentation!
 ==================================
 
-This package aims to offer streamlined access to heliophysics dataset provided by AMDA (and other 
-providers).
+:program:`amdapy` is a python package for accessing data in AMDA. It is intended for anyone interested in
+manipulating heliophysics data. AMDA provides a vast collection of plasma physics datasets and
+analysis tools via its web platform `AMDA <http://amda.irap.omp.eu>`_. The :program:`amdapy` package provides
+an interface for those wishing to manipulate AMDA datasets in their python scripts.
+
+.. figure:: img/amda_home.png
+   :width: 600
+   :alt: AMDA home page
+   :align: center
+   :figclass: align-center
+
+   AMDA home page
 
 .. toctree::
    :maxdepth: 3
@@ -23,139 +33,176 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+What is amdapy ?
+================
 
-AMDA
-====
+:program:`AMDA` is a collection of tools and datasets destined for research in the field to heliophysics. Through
+the web plateform `AMDA <http://amda.irap.omp.eu>`_ user can download datasets from a multitude of missions, 
+retrieve information about instrumentation used during these missions and view the measurements. 
 
-This package aims to provide streamlined access to dataset available on :program:`AMDA` (as well as some other
-data providers). :program:`AMDA` provides a collection of visualization and analysis tools for heliophical data
-and this python package aims to provide an interface for retrieving datasets without accessing the 
-online plateform as well as a collection of tools for analysing the data. 
+AMDA also provides access to simulation models and advanced vizualisation tools. For specific 
+application users often have to download the data and perform the desired operations themselves.
 
-Interacting with AMDA is done through the :class:`amdapy.amda.AMDA` class which implements methods
-for navigating and querying the AMDA dataset catalogue. The connector object is initialized simply
+Python is an open-source development language with a large and very active community. Reasearchers
+have developed a number of packages usefull in the field of astrophysics and :program:`amdapy`
+aims to fill this gap in functionality. Users familiar with datasets in AMDA can now easily 
+download data as a simple python object and do with it as they please.
 
-.. code-block:: python
+:program:`amdapy` makes use of AMDA's internal REST/SOAP web service protocol to deliver data to the
+user.
 
-   >>> amda = amdapy.amda.AMDA()
-
-Missions and instruments
-------------------------
-
-In AMDA datasets are associated with a pair (Mission, Instrument). Retrieving a list of missions is
-done like this : 
-
-.. code-block:: python
-
-   >>> [m.name for m in amda.mission()]
-   ['ACE', 'AMPTE',..., 'VEX', 'Voyager', 'Wind']
-
-In a similar fashion we can get a list of instruments associated with a mission, here we fetch
-names of all instruments aboard the ACE mission.
-
-.. code-block:: python
-
-   >>> [i.name for i in amda.instruments("ACE")]
-   ['MFI', 'SWEPAM', 'Ephemeris']
-
-List all datasets associated with mission ACE and instrument MFI
-
-.. code-block:: python
-
-   >>> for dataset in amda.iter_dataset(mission="ACE", instrument="MFI"):
-   >>>   print(dataset)
-   AMDADataset(id:ace-imf-all, start:1997-09-02 00:00:12, stop:2021-02-27 23:59:48, n_param:3)
-   AMDADataset(id:ace-mag-real, start:2020-11-11 00:00:00, stop:2021-03-10 03:59:59, n_param:3)
-
-Iterate over variables belonging to the dataset
-
-.. code-block:: python
-
-   >>> dataset = amda.get_dataset("ace-imf-all")
-   >>> for var in dataset.iter_variable():
-   >>>   print(var.name, var.units)
-   |b| nT
-   b_gse nT
-   b_gsm nT
-
-Dataset exploration
--------------------
-
-Accessing AMDA datasets is done through methods provided by the :class:`amdapy.amda.AMDA` class. Getting datasets from AMDA : 
-
-.. code-block:: python
-
-   >>> amda = amdapy.amda.AMDA()
-   >>> # iterate over datasets
-   >>> for dataset in amda.iter_dataset():
-   >>>   print("Dataset id : {}".format(dataset.id))
-   AMDADataset(id:ace-imf-all)
-   AMDADataset(id:ace-mag-real)
-   ...
-   AMDADataset(id:wnd-swe-kp)
-
-The objects returned by :meth:`amdapy.amda.AMDA.iter_dataset` are of type :class:`amdapy.amda.AMDADataset`. Retrieving the contents of the dataset can be time consumming, thus a call to the 
-:meth:`amdapy.amda.AMDADataset.get` method is needed before accessing the contents of the dataset. 
-The available information are the start and stop time of the dataset and the shape of it's variables. 
-A specific dataset can be retrieved by its :data:`id` with the :meth:`amdapy.amda.AMDA.get_dataset` method.
-
-Once the data has been loaded the user can access the variables of the dataset.
-
-.. code-block:: python
-
-   >>> dataset_id="ace-imf-all"
-   >>> dataset = amda.get_dataset(dataset_id)
-   >>> print([variable.name for variable in dataset.variables])
-   []
-   >>> dataset.get()
-   >>> print([variable.name for variable in dataset.variables])
-   ['imf_mag','imf','imf_gsm']
-
-Variable data is available a :class:`amdapy.core.variable.Variable` objects.
-
-.. code-block:: python
-
-   >>> type(dataset.variables[0])
-   <class 'amdapy.core.variable.Variable'>
+.. warning::
+   This package is still under active developement and could undergo changes at any point.
 
 
-Variables and Datasets
-----------------------
 
-The variables values are stored as :class:`pandas.DataFrame` objects, elements can be accessed using
-the bracket operator.
+Getting started
+===============
 
-.. code-block:: python
+The following is an introduction to using :program:`amdapy`. We present the hierachy under which
+AMDA stores its data structures and how we propose to navigate it.
 
-   >>> var = dataset.variables[0]
-   >>> type(var[:])
-   <class 'pandas.core.frame.DataFrame'>
-   >>> var[:]
-                      Time  imf_mag
-   0   1997-09-02 00:00:28    2.348
-   1   1997-09-02 00:00:44    2.384
-   2   1997-09-02 00:01:00    2.302
-   3   1997-09-02 00:01:16    2.370
-   4   1997-09-02 00:01:32    2.455
-   ..                  ...      ...
-   220 1997-09-02 00:59:08    3.679
-   221 1997-09-02 00:59:24    3.755
-   222 1997-09-02 00:59:40    3.675
-   223 1997-09-02 00:59:56    3.619
-   224 1997-09-02 01:00:12    3.631
-   
-   [225 rows x 2 columns]
+Installing amdapy
+-----------------
+
+The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <amdapy-0.1.tar.gz>`. 
+
+To install the package with pip use the following::
+  
+  pip3 install amdapy.tar.gz
+
+On windows if you have :program:`Anaconda` installed then use::
+  
+  conda install amdapy.tar.gz
 
 
-Data providers
+The collection 
 --------------
 
-Datasets are available on a multitude of platforms, the ones :program:`amdapy` provides access to are
-AMDA, PDS, CDAWEB. The last two providers offer a public index listing all available datasets. New 
-providers may be defined by sublcassing the :class:`amdapy.provider.DataProvider` class. We can view
-the list of providers through the :meth:`amdapy.provider.iter_provider`. Providers are identified 
-by their name, which should be unique. The simplest data providers are built around manipulating their
-public index. New providers can easly be defined for any website offering a public index of their data
-files.
+Datasets belong to a mission and an instrument and contain parameters (which we will refer to
+indistinctively. As each instrument makes measurements over time all parameters are timeseries. When
+refering to a parameters *size* we refer to any dimension other than time, for instance a position is of
+size (or dimension) 3.
 
-The :meth:`amdapy.ddtime.DDTime.from_datetime` method. 
+Datasets and parameters have a *unique* identifier in AMDA by which they can be retrived. The 
+:meth:`amdapy.amda.Collection.find` searches the collection for an item with the corresponding id and returns
+a description of that object as presented below.
+
+.. code-block:: python
+   
+   >>>dataset_desc
+   Dataset (id:tao-ura-sw, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)
+        Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
+        Parameter (id:ura_sw_v, name:velocity, units:km/s, nodata)
+        Parameter (id:ura_sw_t, name:temperature, units:eV, shape: (24,))
+        Parameter (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, shape: (24,))
+        Parameter (id:ura_sw_b, name:b tangential, units:nT, shape: (24,))
+        Parameter (id:ura_sw_bx, name:b radial, units:nT, shape: (24,))
+        Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, shape: (24,))
+
+AMDA's web service provides the user with a XML collection that is parsed by the :class:`amdapy.amda.Collection` class. This object returns descriptions of the items belonging to the collection.
+Dataset descriptions are accessed via the :class:`amdapy.amda.Collection.Dataset` class and parameters through :class:`amdapy.amda.Collection.Parameter`.
+
+.. figure:: img/param_id.png
+   :width: 400
+   :alt: Parameter ID in AMDA
+   :align: center
+   :figclass: align-center
+
+   You can find a parameters ID in the information popup when hovering a parameter in the AMDA dataset navigation tree
+
+Getting data
+------------
+
+Let's see how to retrieve some data with a simple example by downloading the :data:`tao-ura-sw` dataset.
+
+Interacting with AMDA is done through the connector object :class:`amdapy.amda.AMDA` : 
+
+.. code-block:: python
+
+   >>> from amdapy.amda import AMDA
+   >>> amda = AMDA()
+
+The user must retrieve the dataset description object (:class:`amdapy.amda.Collection.Dataset`) 
+using the :meth:`amdapy.amda.Collection.find` method.
+
+.. code-block:: python
+
+   >>> dataset_description = amda.collection.find("tao-ura-sw")
+   >>> dataset_description
+   Dataset item (id:tao-ura-sw, name:SW / Input OMNI, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)
+        Parameter item (id:ura_sw_n, name:density, units:cm⁻³, disp:None, dataset:tao-ura-sw, n:1)
+        Parameter item (id:ura_sw_v, name:velocity, units:km/s, disp:None, dataset:tao-ura-sw, n:2)
+        Parameter item (id:ura_sw_t, name:temperature, units:eV, disp:None, dataset:tao-ura-sw, n:1)
+        Parameter item (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, disp:None, dataset:tao-ura-sw, n:1)
+        Parameter item (id:ura_sw_b, name:b tangential, units:nT, disp:None, dataset:tao-ura-sw, n:1)
+        Parameter item (id:ura_sw_bx, name:b radial, units:nT, disp:None, dataset:tao-ura-sw, n:1)
+        Parameter item (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, disp:None, dataset:tao-ura-sw, n:1) 
+
+You may now download the data :
+
+.. code-block:: python
+
+   >>> dataset = amda.get(dataset_description)
+   >>> dataset
+   Dataset (id:tao-ura-sw, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)
+        Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
+        Parameter (id:ura_sw_v, name:velocity, units:km/s, nodata)
+        Parameter (id:ura_sw_t, name:temperature, units:eV, shape: (24,))
+        Parameter (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, shape: (24,))
+        Parameter (id:ura_sw_b, name:b tangential, units:nT, shape: (24,))
+        Parameter (id:ura_sw_bx, name:b radial, units:nT, shape: (24,))
+        Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, shape: (24,))
+
+The contents of the dataset are availble through the :data:`data` attribute : 
+
+.. code-block:: python
+
+   >>> type(dataset.data)
+   <class 'pandas.core.frame.DataFrame'>
+
+You can get individual parameters either through the bracket operator by passing the name or id
+of the desired parameter or by using the :meth:`amdapy.amda.Dataset.iter_parameter` method.
+
+.. code-block:: python
+
+   >>> dataset["density"]
+   Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
+
+By default when calling :meth:`amdapy.amda.AMDA.get` without the :data:`t_interval` argument, only
+the first day of data is returned. If more data is required you can specify the time interval like
+in the following example : 
+
+.. code-block:: python
+
+   >>> from amdapy.amda import Timespan
+   >>> import datetime
+   >>> time_interval = Timespan(dataset_description.starttime, dataset_description.starttime+datetime.timedelta(days=10))
+   >>> dataset = amda.get(dataset_description, time_interval)
+   >>> dataset.data.shape
+   (240,8)
+
+A simple plot example : 
+
+.. code-block:: python
+   
+   >>> import matplotlib.pyplot as plt
+   >>> parameter = dataset["density"]
+   >>> fig = plt.figure()
+   >>> plt.title("dataset: {}, parameter: {}".format("tao-ura-sw", parameter.name))
+   >>> plt.xlabel("Time")
+   >>> plt.ylabel("{} ({})".format(parameter.name, parameter.units))
+   >>> plt.grid(True)
+   >>> plt.plot(dataset["density"][:])
+   >>> fig.autofmt_xdate()
+   >>> plt.show()
+
+.. figure:: img/simple_plot.png
+   :width: 600
+   :alt: Simple plot of *density* for *tao-ura-sw* dataset
+   :align: center
+   :figclass: align-center
+
+   Plot *density* from *tao-ura-sw* dataset
+
+
