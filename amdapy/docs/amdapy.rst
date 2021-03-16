@@ -85,21 +85,21 @@ Submodules
       :undoc-members:
       :show-inheritance:
 
-amdapy.amdaWSClient.client module
----------------------------------
-
-.. automodule:: amdapy.amdaWSClient.client
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-amdapy.amdaWSClient.obstree module
-----------------------------------
-
-.. automodule:: amdapy.amdaWSClient.obstree
-    :members:
-    :undoc-members:
-    :show-inheritance:
+  amdapy.amdaWSClient.client module
+  ---------------------------------
+  
+  .. automodule:: amdapy.amdaWSClient.client
+      :members:
+      :undoc-members:
+      :show-inheritance:
+  
+  amdapy.amdaWSClient.obstree module
+  ----------------------------------
+  
+  .. automodule:: amdapy.amdaWSClient.obstree
+      :members:
+      :undoc-members:
+      :show-inheritance:
 
 amdapy.amda module
 ------------------

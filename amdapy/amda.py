@@ -205,14 +205,22 @@ class Dataset:
         if v.id==key or v.name==key:
           return v
 class AMDA:
-  """Class for accessing data on AMDA
+  """AMDA database connector. Use this object to connect to query AMDAs database. The :data:`collection`
+  (:class:`Collection`) allows acces to dataset description. 
+
+  .. code-block:: python
+
+     >>> amda = amdapy.amda.AMDA()
+     >>> for dataset in amda.collection.iter_dataset():
+     >>>     print(dataset)
+
   """
   def __init__(self):
     """Object constructor
     """
     self.name="AMDA"
     self.collection=Collection()
-  def datasetel_to_dataset(self, datasetel, t_interval):
+  def _datasetel_to_dataset(self, datasetel, t_interval):
     """Convert a :class:`amdapy.amdaWSClient.obstree.DatasetElement` object to a :class:`amdapy.amda.AMDADataset` object
 
     :param datasetel: dataset representation
@@ -224,7 +232,7 @@ class AMDA:
 
     """
     # get the data
-    cols=self.get_column_names(datasetel)
+    cols=self._get_column_names(datasetel)
     did=datasetel.id
     if t_interval is None:
       startt=datasetel.starttime
@@ -237,7 +245,7 @@ class AMDA:
     data["Time"]=pd.to_datetime(data["Time"])
     data.set_index("Time",inplace=True)
     return Dataset(datasetel, data=data)
-  def get_column_names(self, datasetel):
+  def _get_column_names(self, datasetel):
     """Get list of column names
 
     :param datasetel: dataset collection item
@@ -260,7 +268,7 @@ class AMDA:
     """Gets a item from the collection.
 
     :param item: collection item
-    :type item: amdapy.amda.CollectionItem
+    :type item: amdapy.amda._CollectionItem
     :param t_interval: time interval, if this is None then return only the **first day** of data
     :type t_interval: Timespan
     :return: parameter or dataset depending on the input, None if item is badly defined
@@ -411,26 +419,9 @@ class AMDA:
        Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
 
     """
-    return self.datasetel_to_dataset(dataset_item, t_interval)
-  def missions(self):
-    """Get list of missions
+    return self._datasetel_to_dataset(dataset_item, t_interval)
 
-    :return: List of mission names
-    :rtype: list
-    """
-    return [m for m in self.tree.iter_mission()]
-  def instruments(self, mission):
-    """Get list of instrument names
-
-    :param mission: mission name
-    :type mission: str
-    :return: list of instrument names
-    :rtype: str
-    """
-    mission=self.tree.find_mission(mission)
-    return [i for i in mission.instruments]
-
-class CollectionItem:
+class _CollectionItem:
   """Collection item base class. This is a base class shared by all items of the collection. All
   collection items have an id attribute.
 
@@ -441,7 +432,8 @@ class CollectionItem:
     self.id=id
 
 class Collection:
-  """This objects allows to navigate the various objects available in the AMDA database.
+  """The :class:`Collection` object is used for getting descriptions of the items in AMDAs database.
+  Navigation the database is done with the :meth:`Collection.iter_dataset` iterator.
   """
   def __init__(self):
     """Object constructor
@@ -454,7 +446,7 @@ class Collection:
     :param id: id of the desired item
     :type id: str
     :return: Collection item with the right id if found, None otherwise
-    :rtype: amdapy.amda.CollectionItem or None
+    :rtype: amdapy.amda._CollectionItem or None
 
     Iterates over all dataset objects in search for one with 
     the right id, if the id doesn't match then proceeds to check all parameters in the dataset
@@ -499,18 +491,18 @@ class Collection:
     :rtype: amdapy.amda.Collection.Item
     """
     for i in self.tree.iter_dataset():
-      params=[self.Parameter(id=p.id, name=p.name, units=p.units, description=p.description, displaytype=p.displaytype, dataset_id=p.parent_dataset_id, components=self.get_component_description(p)) for p in i.parameters]
+      params=[self.Parameter(id=p.id, name=p.name, units=p.units, description=p.description, displaytype=p.displaytype, dataset_id=p.parent_dataset_id, components=self._get_component_description(p)) for p in i.parameters]
       yield self.Dataset(id=i.id, name=i.name, parameters=params, starttime=i.datastart, stoptime=i.datastop)
-  def get_component_description(self, param):
+  def _get_component_description(self, param):
     """Get collection items for the parameters components
 
     :param param: parameter object
     :type param: amdapy.amdaWSClient.obstree.ParameterElement
     :return: parameter component collection items
-    :rtype: list of amdapy.amda.Collection.Component
+    :rtype: list of amdapy.amda.Collection._Component
     """
-    return [self.Component(id=c.id, name=c.name, index=c.index) for c in param.components] 
-  class Mission:
+    return [self._Component(id=c.id, name=c.name, index=c.index) for c in param.components] 
+  class _Mission:
     """Object for containing mission description
     
     :param id: mission id, unique withing the AMDA context, used to retrieve complete mission description
@@ -532,7 +524,7 @@ class Collection:
       self.description=description
       self.startdate=startdate
       self.stopdate=stopdate
-  class Instrument:
+  class _Instrument:
     """Object for containing instrument description
 
     :param id: instrument identifier
@@ -545,7 +537,7 @@ class Collection:
       """
       self.id=id
       self.name=name
-  class Component:
+  class _Component:
     """Parameter component description
 
     :param id: component id
@@ -561,8 +553,21 @@ class Collection:
       self.id=id
       self.name=name
       self.index=index
-  class Parameter(CollectionItem):
-    """Object for containing parameter descriptions
+  class Parameter(_CollectionItem):
+    """This object contains parameter descriptions.
+
+    .. warning::
+
+      Parameter descriptions do not contain any information about the data timespan, to get the
+      begining and end date of the data you must retrieve the parent dataset whose id is given by the
+      :data:`dataset_id` attribute.
+
+    You can access the following information through this container : 
+       * id : unique parameter id
+       * name : parameter name
+       * units : data units
+       * dataset_id : parent dataset id
+       * components : list of components, only if these are available in AMDA
 
     :param id: parameter identification
     :type id: str
@@ -577,7 +582,7 @@ class Collection:
     :param dataset_id: identification of the parent dataset
     :type dataset_id: str
     :param components: list of components 
-    :type components: list of amdapy.amda.Collection.Component objects
+    :type components: list of amdapy.amda.Collection._Component objects
     """
     def __init__(self, id, name, units, description, displaytype, dataset_id, components=[]):
       """Object constructor
@@ -600,8 +605,14 @@ class Collection:
       """
       return "Parameter item (id:{}, name:{}, units:{}, disp:{}, dataset:{}, n:{})".format(self.id, self.name, self.units, self.displaytype, self.dataset_id, self.n)
 
-  class Dataset(CollectionItem):
-    """Object for containing dataset descriptions
+  class Dataset(_CollectionItem):
+    """This object contains a description of a dataset. Attributes are:
+       * id : unique identifier for the dataset
+       * name : name of the dataset in AMDAs navigation tree
+       * starttime : data start time (:class:`datetime.datetime` )
+       * stoptime : data stop time (:class:`datetime.datetime`)
+       * parameters : list of parameter descriptions (:class:`amdapy.amda.Collection.Parameter`)
+       * n : number of parameters
 
     :param id: dataset identification, should be unique, used for retriving contents of the dataset
     :type id: str
@@ -675,5 +686,5 @@ if __name__=="__main__":
   print("bracket operator on dataset")
   print(data["ura_sw_n"])
   print(data["ura_sw_n"].data)
-  exit()
+
 

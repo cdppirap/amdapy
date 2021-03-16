@@ -62,8 +62,8 @@ Getting started
 The following is an introduction to using :program:`amdapy`. We present the hierachy under which
 AMDA stores its data structures and how we propose to navigate it.
 
-Installing amdapy
------------------
+Installation
+------------
 
 The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <../../dist/amdapy-0.1.tar.gz>`. 
 
