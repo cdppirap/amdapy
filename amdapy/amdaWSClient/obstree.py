@@ -6,7 +6,7 @@
 Using the :meth:`amdapy.amdaWSClient.client.get_obs_tree` method we can retrieve an XML file containing
 descriptions of all available datasets, and the parameters therein. The :class:`ObsTree` is used for 
 parsing the elements of the XML file and returning dataset and parameter descriptions. Since the 
-:package:`amdapy.amdaWSClient.client` module provides functions for retrieving *datasets* and *parameters*, 
+:mod:`amdapy.amdaWSClient.client` module provides functions for retrieving *datasets* and *parameters*, 
 navigating the AMDA catalogue involves gathering descriptions of datasets and parameters. It is noted
 that in AMDA all datasets are timeseries. Although nothing specific to timeseries has yet been implemented
 it is good to keep this in mind.
