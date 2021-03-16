@@ -80,6 +80,20 @@ class Parameter:
     self.name=name
     self.units=units
     self.data=data
+  def plot(self):
+    """Plot the parameter. Naive plotting function for visualizing time series data.
+
+    :return: pyplot figure object
+    :rtype: pyplot figure
+    """
+    import matplotlib.pyplot as plt
+    fig=plt.figure()
+    plt.title("param: {}".format(self.name))
+    plt.plot(self[:])
+    plt.xlabel("Time")
+    plt.ylabel("{} ({})".format(self.name, self.units))
+    fig.autofmt_xdate()
+    return fig
   def __getitem__(self, key):
     """Get parameter data
     
@@ -135,6 +149,12 @@ class Dataset:
       param=Parameter(p.id, p.name, p.units, None)
       if p.n==1:
         param.data=self.data[p.name]
+      else:
+        # get the names of the columns
+        cc=[]
+        for c in p.components:
+          cc.append(p.name+"_"+c.name)
+        param.data=self.data[cc]
       self.parameters.append(param)
         
   def iter_parameter(self):
@@ -220,13 +240,15 @@ class AMDA:
     """
     self.name="AMDA"
     self.collection=Collection()
-  def _datasetel_to_dataset(self, datasetel, t_interval):
+  def _datasetel_to_dataset(self, datasetel, start, stop):
     """Convert a :class:`amdapy.amdaWSClient.obstree.DatasetElement` object to a :class:`amdapy.amda.AMDADataset` object
 
     :param datasetel: dataset representation
     :type datasetel: amdapy.amdaWSClient.obstree.DatasetElement
-    :param t_interval: time interval for which we want the dataset data
-    :type t_interval: Timespan
+    :param start: data start time
+    :type start: datetime.datetime
+    :param stop: data stop time
+    :type stop: datetime.datetime
     :return: dataset representation
     :rtype: amdapy.amda.AMDADataset
 
@@ -234,13 +256,17 @@ class AMDA:
     # get the data
     cols=self._get_column_names(datasetel)
     did=datasetel.id
-    if t_interval is None:
-      startt=datasetel.starttime
-      stopt=startt+datetime.timedelta(days=1)
+    if stop is None:
+      if start is None:
+        start=datasetel.starttime
+        stop=start+datetime.timedelta(days=1)
+      else:
+        stop=start+datetime.timedelta(days=1)
+    elif start is None:
+      start=stop - datetime.timedelta(days=1)
     else:
-      startt=t_interval.start
-      stopt=t_interval.stop
-    data=amdapy.amdaWSClient.client.get_dataset(did, startt, stopt, cols)
+      pass
+    data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols)
     data.columns=cols
     data["Time"]=pd.to_datetime(data["Time"])
     data.set_index("Time",inplace=True)
@@ -264,13 +290,15 @@ class AMDA:
         col.append(p.name)
     return col
 
-  def get(self, item, t_interval=None):
+  def get(self, item, start=None, stop=None):
     """Gets a item from the collection.
 
     :param item: collection item
     :type item: amdapy.amda._CollectionItem
-    :param t_interval: time interval, if this is None then return only the **first day** of data
-    :type t_interval: Timespan
+    :param start: data start time
+    :type start: datetime.datetime
+    :param stop: data stop time
+    :type stop: datetime.datetime
     :return: parameter or dataset depending on the input, None if item is badly defined
     :rtype: amda.Parameter or amda.Dataset
     
@@ -295,19 +323,22 @@ class AMDA:
           Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, value: None)
 
     """
+    print("in amdapy.amda.AMDA.get : type of item {}".format(type(item)))
     if isinstance(item, Collection.Dataset):
-      return self.get_dataset(item, t_interval)
+      return self.get_dataset(item, start, stop)
     elif isinstance(item, Collection.Parameter):
-      return self.get_parameter(item)
+      return self.get_parameter(item, start, stop)
     else:
       print("Getting other")
-  def get_parameter(self, param, t_interval=None):
+  def get_parameter(self, param, start=None, stop=None):
     """Get parameter data.
 
     :param param: parameter descriptor
     :type param: amda.Collection.Parameter 
-    :param t_interval: time interval, optional, default is None in which case only the first day of data is produced
-    :type t_interval: Timespan
+    :param start: data start time
+    :type start: datetime.datetime
+    :param stop: data stop time
+    :type stop: datetime.datetime
     :return: Parameter object
     :rtype: amdapy.amda.Parameter
 
@@ -340,6 +371,7 @@ class AMDA:
     """
     psize=param.n
     col_names=None
+    # check the display type
     if psize==1:
       col_names=[param.name]
     else:
@@ -353,16 +385,20 @@ class AMDA:
     else:
       startt=t_interval.start
       stopt=t_interval.stop
+    print("in amdapy.amda.AMDA.get_parameter, getting data from {} to {}".format(startt, stopt))
+    print("\targuments for get_parameter : {} , {}, {}, {}".format(param.id, startt, stopt, col_names))
     d=amdapy.amdaWSClient.client.get_parameter(param.id, startt,stopt, col_names)
     d.set_index("Time", inplace=True)
     return Parameter(id=param.id, name=param.name, data=d,units=param.units)
-  def get_dataset(self, dataset_item, t_interval=None):
+  def get_dataset(self, dataset_item, start=None, stop=None):
     """Get dataset contents.
 
     :param dataset_item: dataset item
     :type dataset_id: Collection.Dataset
-    :param t_interval: time interval, if None is passed then only return the first hour of data
-    :type t_interval: Timespan or None
+    :param start: data start time
+    :type start: datetime.datetime
+    :param stop: data stop time
+    :type stop: datetime.datetime
     :return: dataset object if found, None otherwise
     :rtype: amdapy.amda.Dataset or None
 
@@ -419,7 +455,7 @@ class AMDA:
        Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
 
     """
-    return self._datasetel_to_dataset(dataset_item, t_interval)
+    return self._datasetel_to_dataset(dataset_item, start, stop)
 
 class _CollectionItem:
   """Collection item base class. This is a base class shared by all items of the collection. All

@@ -498,6 +498,12 @@ class AMDARESTClient:
             return None
 DATE_FORMAT="%Y-%m-%dT%H:%M:%S"
 DATE_FORMATZ="%Y-%m-%dT%H:%M:%S.%f"
+def get_column_names(in_str):
+    for line in in_str.split("\n"):
+        if line.startswith("# DATA_COLUMNS : "):
+            l=line.replace("# DATA_COLUMNS : ","")
+            l=l.replace("AMDA_TIME","Time")
+            return l.split(", ")
 def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
@@ -510,11 +516,15 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
       print("Error getting authentification token")
       return
     pfu=client.get_parameter(t,start,stop,param_id)
+    print("in amdapy.amdaWSClient.client.get_parameter : pfu: {}".format(pfu))
     resp=requests.get(pfu)
     dparser=date_parser
     if dparser is None:
         dparser=common_date_parser
-    data=pd.read_csv(io.StringIO(resp.text), comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+    try:
+        data=pd.read_csv(io.StringIO(resp.text), comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+    except:
+        data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+", names=get_column_names(resp.text), parse_dates=["Time"], date_parser=dparser)
     #os.system("rm {}".format(data_file))
     return data
 def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
