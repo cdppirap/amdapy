@@ -65,9 +65,13 @@ AMDA stores its data structures and how we propose to navigate it.
 Installation
 ------------
 
-The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <../../dist/amdapy-0.1.tar.gz>`. 
+The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <../../dist/amdapy-0.1.1.tar.gz>`. 
 
-To install the package with pip use the following::
+Install by executing the following ::
+  
+  pip3 install -i https://test.pypi.org/simple amdapy
+ 
+To install the package with pip from the source archive use the following::
   
   pip3 install amdapy.tar.gz
 
@@ -187,14 +191,7 @@ A simple plot example :
 .. code-block:: python
    
    >>> import matplotlib.pyplot as plt
-   >>> parameter = dataset["density"]
-   >>> fig = plt.figure()
-   >>> plt.title("dataset: {}, parameter: {}".format("tao-ura-sw", parameter.name))
-   >>> plt.xlabel("Time")
-   >>> plt.ylabel("{} ({})".format(parameter.name, parameter.units))
-   >>> plt.grid(True)
-   >>> plt.plot(dataset["density"][:])
-   >>> fig.autofmt_xdate()
+   >>> fig = dataset["density"].plot(dataset_id="tao-ura-sw")
    >>> plt.show()
 
 .. figure:: img/simple_plot.png

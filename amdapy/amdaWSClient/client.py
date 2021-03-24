@@ -244,14 +244,15 @@ class AMDARESTClient:
             'timeFormat': timeformat,
             'gzip': compression
         }
-
         result = self.__get_request('getDataset.php', params=self.__merge_params(params, optional_params))
         if not result:
+            print("Error retrieving data, try a smaller time period")
             return None
 
         result_json = result.json()
         if not result_json or ('success' not in result_json) or (not result_json['success']) \
                 or ('dataFileURLs' not in result_json) or (result_json['dataFileURLs'] == ''):
+            print("Error retrieving data, try a smaller time period")
             return None
 
         return result_json['dataFileURLs']
@@ -381,17 +382,20 @@ class AMDARESTClient:
         result = self.__get_request(method='getParameter.php', params=self.__merge_params(params, optional_params))
 
         if not result:
+            print("Error getting parameter data, try a smaller time period")
             return None
 
         result_json = result.json()
 
         if not result_json or ('success' not in result_json) or (not result_json['success']):
+            print("Error getting parameter data, try a smaller time period")
             return None
 
         if ('status' in result_json) and (result_json['status'] == 'in progress'):
             #In batch mode
             while True:
                 #Wait for 30 seconds
+                print("Download in progress, please do not interrupt")
                 time.sleep(30)
                 result = self.get_status(result_json['id'])
                 if not result:
@@ -516,7 +520,6 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
       print("Error getting authentification token")
       return
     pfu=client.get_parameter(t,start,stop,param_id)
-    print("in amdapy.amdaWSClient.client.get_parameter : pfu: {}".format(pfu))
     resp=requests.get(pfu)
     dparser=date_parser
     if dparser is None:
@@ -539,6 +542,9 @@ def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
         print("Error getting authentification token")
         return
     pfu=client.get_dataset(t,start,stop,dataset_id)
+    if pfu is None:
+      return None
+    #print("In amdaWSClient. get_dataset : pfu: {}".format(pfu))
     resp=requests.get(pfu)
     data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+")
     return data
