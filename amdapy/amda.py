@@ -23,7 +23,6 @@ import amdapy
 import datetime
 import pandas as pd
 from amdapy.amdaWSClient.client import get_obs_tree
-from amdapy.core.timespan import Timespan
 import matplotlib.pyplot as plt
 
 class Parameter:
