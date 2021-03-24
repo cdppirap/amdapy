@@ -3,7 +3,7 @@
 Python package for AMDA
 =======================
 
-:program:`amdapy` is a python package for accessing heliophysics data stored on the AMDA plateform.
+`amdapy` is a python package for accessing heliophysics data stored on the AMDA plateform.
 
 Installation
 ------------
