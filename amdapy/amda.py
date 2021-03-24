@@ -23,33 +23,8 @@ import amdapy
 import datetime
 import pandas as pd
 from amdapy.amdaWSClient.client import get_obs_tree
-
-class Timespan:
-  """Time interval container class
-
-  :param start: start date time
-  :type start: datetime.datetime or None
-  :param stop: stop date time
-  :type stop: datetime.datetime
-  """
-  def __init__(self, start, stop):
-    """Object constructor
-    """
-    self.start=start
-    self.stop=stop
-  def __contains__(self, o):
-    """Check if timespan contains another object
-
-    :param o: object to check, can be a datetime object or a Timespan
-    :type o: datetime.datetime or Timespan
-    :return: True if current timespan object contains :data:`o`
-    :rtype: True or False
-    """
-    if isinstance(o, datetime.datetime):
-      return self.start <= o and self.stop > o
-    if isinstance(o, Timespan):
-      return self.start <= o.start and self.stop > o.stop
-    return False
+from amdapy.core.timespan import Timespan
+import matplotlib.pyplot as plt
 
 class Parameter:
   """Container class for storing parameter objects.
@@ -80,20 +55,30 @@ class Parameter:
     self.name=name
     self.units=units
     self.data=data
-  def plot(self):
+  def plot(self, dataset_id=None, figsize=None):
     """Plot the parameter. Naive plotting function for visualizing time series data.
 
     :return: pyplot figure object
     :rtype: pyplot figure
     """
-    import matplotlib.pyplot as plt
-    fig=plt.figure()
-    plt.title("param: {}".format(self.name))
-    plt.plot(self[:])
+    fig=plt.figure(figsize=figsize)
+    if dataset_id is None:
+      plt.title("param: {}".format(self.name))
+    else:
+      plt.title("dataset: {}, param: {}".format(dataset_id, self.name))
+    # check if parameter has multiple components
+    if len(self.data.shape)>1:
+      for i in range(self.data.shape[1]):
+        plt.plot(self.data.iloc[:,i],label=self.data.columns[i].replace(self.name, ""))
+      plt.legend([self.data.columns[i] for i in range(self.data.shape[1])])  
+    else:
+      plt.plot(self[:])
     plt.xlabel("Time")
+    plt.grid(True)
     plt.ylabel("{} ({})".format(self.name, self.units))
     fig.autofmt_xdate()
-    return fig
+    plt.show()
+    return 
   def __getitem__(self, key):
     """Get parameter data
     
@@ -139,9 +124,9 @@ class Dataset:
     """
     self.id=el.id
     self.el=el
-    self.starttime=el.starttime
-    self.stoptime=el.stoptime
     self.data=data
+    self.globalstart=self.data.index[0]
+    self.globalstop=self.data.index[-1]
     self.parameters=[]
     self.make_parameter_list(el)
   def make_parameter_list(self, el):
@@ -183,7 +168,7 @@ class Dataset:
     :return: dataset string representation
     :rtype: str
     """
-    a="Dataset (id:{}, start:{}, stop:{}, n_param:{})".format(self.id, self.starttime, self.stoptime,len(self.el.parameters))
+    a="Dataset (id:{}, start:{}, stop:{}, n_param:{})".format(self.id, self.globalstart, self.globalstop,len(self.el.parameters))
     for p in self.parameters:
       a="{}\n\t{}".format(a,p)
     return a
@@ -224,6 +209,9 @@ class Dataset:
       for v in self.parameters:
         if v.id==key or v.name==key:
           return v
+      # check if it corresponds to a column
+      if key in self.data.columns:
+          return self.data[key]
 class AMDA:
   """AMDA database connector. Use this object to connect to query AMDAs database. The :data:`collection`
   (:class:`Collection`) allows acces to dataset description. 
@@ -258,7 +246,7 @@ class AMDA:
     did=datasetel.id
     if stop is None:
       if start is None:
-        start=datasetel.starttime
+        start=datasetel.globalstart
         stop=start+datetime.timedelta(days=1)
       else:
         stop=start+datetime.timedelta(days=1)
@@ -289,16 +277,15 @@ class AMDA:
       else:
         col.append(p.name)
     return col
-
   def get(self, item, start=None, stop=None):
     """Gets a item from the collection.
 
     :param item: collection item
     :type item: amdapy.amda._CollectionItem
     :param start: data start time
-    :type start: datetime.datetime
-    :param stop: data stop time
-    :type stop: datetime.datetime
+    :type start: datetime.datetime or str
+    :param stop: data stop time 
+    :type stop: datetime.datetime or str
     :return: parameter or dataset depending on the input, None if item is badly defined
     :rtype: amda.Parameter or amda.Dataset
     
@@ -321,15 +308,31 @@ class AMDA:
           Parameter (id:ura_sw_b, name:b tangential, units:nT, value: None)
           Parameter (id:ura_sw_bx, name:b radial, units:nT, value: None)
           Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, value: None)
+    
+    The :data:`start` and :data:`stop` attributes indicate the desired begining and end of the 
+    data. If they are :class:`str` objects then they must follow the following scheme ::
+      
+      YYYY-MM-DDThh:mm:ss
 
     """
-    print("in amdapy.amda.AMDA.get : type of item {}".format(type(item)))
+    # check that the dates provided are datetime objects, if not then convert them
+    if isinstance(start, str):
+      start=datetime.datetime.strptime(start,amdapy.amdaWSClient.client.DATE_FORMAT) 
+    if isinstance(stop , str):
+      stop=datetime.datetime.strptime(stop, amdapy.amdaWSClient.client.DATE_FORMAT)
+    # check is item is a string, if it is then search for a dataset or parameter
+    if isinstance(item, str):
+      desc=self.collection.find(item)
+      if desc is None:
+        return None
+      return self.get(desc,start, stop)
     if isinstance(item, Collection.Dataset):
       return self.get_dataset(item, start, stop)
     elif isinstance(item, Collection.Parameter):
       return self.get_parameter(item, start, stop)
     else:
-      print("Getting other")
+      print("Error : argument item is not a Collection.Dataset or Collection.Parameter object")
+      return None
   def get_parameter(self, param, start=None, stop=None):
     """Get parameter data.
 
@@ -377,17 +380,19 @@ class AMDA:
     else:
       col_names=[param.name+"_"+str(k.name) for k in param.components]
     col_names=["Time"]+col_names
-    if t_interval is None:
-      # get the parent dataset description
-      parent_desc=self.collection.find(param.dataset_id)
-      startt=parent_desc.starttime
-      stopt=startt+datetime.timedelta(days=1)
+    if stop is None:
+      if start is None:
+        # get the parent dataset start and stop times
+        parent_desc=self.collection.find(param.dataset_id)
+        start=parent_desc.globalstart
+        stop=start+datetime.timedelta(days=1)
+      else:
+        stop=start+datetime.timedelta(days=1)
+    elif start is None:
+      start=stop - datetime.timedelta(days=1)
     else:
-      startt=t_interval.start
-      stopt=t_interval.stop
-    print("in amdapy.amda.AMDA.get_parameter, getting data from {} to {}".format(startt, stopt))
-    print("\targuments for get_parameter : {} , {}, {}, {}".format(param.id, startt, stopt, col_names))
-    d=amdapy.amdaWSClient.client.get_parameter(param.id, startt,stopt, col_names)
+      pass
+    d=amdapy.amdaWSClient.client.get_parameter(param.id, start,stop, col_names)
     d.set_index("Time", inplace=True)
     return Parameter(id=param.id, name=param.name, data=d,units=param.units)
   def get_dataset(self, dataset_item, start=None, stop=None):
@@ -528,7 +533,7 @@ class Collection:
     """
     for i in self.tree.iter_dataset():
       params=[self.Parameter(id=p.id, name=p.name, units=p.units, description=p.description, displaytype=p.displaytype, dataset_id=p.parent_dataset_id, components=self._get_component_description(p)) for p in i.parameters]
-      yield self.Dataset(id=i.id, name=i.name, parameters=params, starttime=i.datastart, stoptime=i.datastop)
+      yield self.Dataset(id=i.id, name=i.name, parameters=params, globalstart=i.datastart, globalstop=i.datastop)
   def _get_component_description(self, param):
     """Get collection items for the parameters components
 
@@ -645,8 +650,8 @@ class Collection:
     """This object contains a description of a dataset. Attributes are:
        * id : unique identifier for the dataset
        * name : name of the dataset in AMDAs navigation tree
-       * starttime : data start time (:class:`datetime.datetime` )
-       * stoptime : data stop time (:class:`datetime.datetime`)
+       * globalstart: data start time (:class:`datetime.datetime` )
+       * globalstop: data stop time (:class:`datetime.datetime`)
        * parameters : list of parameter descriptions (:class:`amdapy.amda.Collection.Parameter`)
        * n : number of parameters
 
@@ -656,10 +661,10 @@ class Collection:
     :type name: str
     :param parameters: list of parameter objects belonging to the dataset
     :type parameters: list of :class:`amdapy.amda.Collection.Parameter` objects
-    :param starttime: start time
-    :type starttime: datetime.datetime
-    :param stoptime: stop time
-    :type stoptime: datetime.datetime
+    :param globalstart: start time
+    :type globalstart: datetime.datetime
+    :param globalstop: stop time
+    :type globalstop: datetime.datetime
 
     This object contains the descriptions of a dataset available in AMDA. You can acces the datasets
     unique identifier through the :data:`id` attribute that is common to all items of the collection.
@@ -682,13 +687,13 @@ class Collection:
     :class:`amdapy.amda.Collection.Dataset` object to the :meth:`amdapy.amda.AMDA.get_dataset` methode.
 
     """
-    def __init__(self, id, name, parameters=[], starttime=None, stoptime=None):
+    def __init__(self, id, name, parameters=[], globalstart=None, globalstop=None):
       """Object constructor
       """
       super().__init__(id)
       self.name=name
-      self.starttime=starttime
-      self.stoptime=stoptime
+      self.globalstart=globalstart
+      self.globalstop=globalstop
       self.parameters=parameters
       self.n=len(parameters)
     def __str__(self):
@@ -697,7 +702,7 @@ class Collection:
       :return: Dataset string representation
       :rtype: str
       """
-      a="Dataset item (id:{}, name:{}, start:{}, stop:{}, n_param:{})".format(self.id, self.name,self.starttime,self.stoptime, self.n)
+      a="Dataset item (id:{}, name:{}, global_start:{}, global_stop:{}, n_param:{})".format(self.id, self.name,self.globalstart,self.globalstop, self.n)
       for p in self.parameters:
         a="{}\n\t{}".format(a,p)
       return a
