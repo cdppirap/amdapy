@@ -10,5 +10,5 @@ Installation
 
 Install with pip 
 
-  ``pip3 install -i https://test.pypi.org/simple amdapy
+  ``pip3 install amdapy
   ``
