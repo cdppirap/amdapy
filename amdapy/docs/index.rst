@@ -37,7 +37,7 @@ What is amdapy ?
 ================
 
 :program:`AMDA` is a collection of tools and datasets destined for research in the field to heliophysics. Through
-the web plateform `AMDA <http://amda.irap.omp.eu>`_ user can download datasets from a multitude of missions, 
+the web plateform `AMDA <http://amda.cdpp.eu>`_ user can download datasets from a multitude of missions, 
 retrieve information about instrumentation used during these missions and view the measurements. 
 
 AMDA also provides access to simulation models and advanced vizualisation tools. For specific 
@@ -65,11 +65,11 @@ AMDA stores its data structures and how we propose to navigate it.
 Installation
 ------------
 
-The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <../../dist/amdapy-0.1.1.tar.gz>`. 
+The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <../../dist/amdapy-0.1.1.tar.gz>`. This package requires :program:`Python3.5` (or a later version).
 
 Install by executing the following ::
   
-  pip3 install -i https://test.pypi.org/simple amdapy
+  pip3 install amdapy
  
 To install the package with pip from the source archive use the following::
   
@@ -77,7 +77,7 @@ To install the package with pip from the source archive use the following::
 
 On windows if you have :program:`Anaconda` installed then use::
   
-  conda install amdapy.tar.gz
+  conda install amdapy
 
 
 The collection 
