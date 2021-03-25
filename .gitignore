@@ -3,4 +3,5 @@ scripts/__pycache__
 *.swp
 *.pyc
 res
+amdapy.egg-info
 
