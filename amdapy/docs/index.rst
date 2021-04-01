@@ -24,6 +24,8 @@ an interface for those wishing to manipulate AMDA datasets in their python scrip
    :caption: Contents:
 
    modules
+   notebooks
+   amdapy-notebook-1.ipynb
 
 
 Indices and tables
