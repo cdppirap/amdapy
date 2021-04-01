@@ -11,6 +11,8 @@ manipulating heliophysics data. AMDA provides a vast collection of plasma physic
 analysis tools via its web platform `AMDA <http://amda.irap.omp.eu>`_. The :program:`amdapy` package provides
 an interface for those wishing to manipulate AMDA datasets in their python scripts.
 
+Github : `https://github.com/cdppirap/amdapy <https://github.com/cdppirap/amdapy>`_.
+
 .. figure:: img/amda_home.png
    :width: 600
    :alt: AMDA home page
