@@ -227,7 +227,7 @@ class AMDA:
     """
     self.name="AMDA"
     self.collection=Collection()
-  def _datasetel_to_dataset(self, datasetel, start, stop):
+  def _datasetel_to_dataset(self, datasetel, start, stop, sampling=None):
     """Convert a :class:`amdapy.amdaWSClient.obstree.DatasetElement` object to a :class:`amdapy.amda.AMDADataset` object
 
     :param datasetel: dataset representation
@@ -236,6 +236,8 @@ class AMDA:
     :type start: datetime.datetime
     :param stop: data stop time
     :type stop: datetime.datetime
+    :param sampling: sampling in seconds
+    :type sampling: float
     :return: dataset representation
     :rtype: amdapy.amda.AMDADataset
 
@@ -253,7 +255,7 @@ class AMDA:
       start=stop - datetime.timedelta(days=1)
     else:
       pass
-    data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols)
+    data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols, sampling=sampling)
     data.columns=cols
     data["Time"]=pd.to_datetime(data["Time"])
     data.set_index("Time",inplace=True)
@@ -276,7 +278,7 @@ class AMDA:
       else:
         col.append(p.name)
     return col
-  def get(self, item, start=None, stop=None):
+  def get(self, item, start=None, stop=None, sampling=None):
     """Gets a item from the collection.
 
     :param item: collection item
@@ -285,6 +287,8 @@ class AMDA:
     :type start: datetime.datetime or str
     :param stop: data stop time 
     :type stop: datetime.datetime or str
+    :param sampling: sampling in seconds
+    :type sampling: float
     :return: parameter or dataset depending on the input, None if item is badly defined
     :rtype: amda.Parameter or amda.Dataset
     
@@ -326,13 +330,13 @@ class AMDA:
         return None
       return self.get(desc,start, stop)
     if isinstance(item, Collection.Dataset):
-      return self.get_dataset(item, start, stop)
+      return self.get_dataset(item, start, stop, sampling=sampling)
     elif isinstance(item, Collection.Parameter):
-      return self.get_parameter(item, start, stop)
+      return self.get_parameter(item, start, stop, sampling=sampling)
     else:
       print("Error : argument item is not a Collection.Dataset or Collection.Parameter object")
       return None
-  def get_parameter(self, param, start=None, stop=None):
+  def get_parameter(self, param, start=None, stop=None, sampling=None):
     """Get parameter data.
 
     :param param: parameter descriptor
@@ -341,6 +345,8 @@ class AMDA:
     :type start: datetime.datetime
     :param stop: data stop time
     :type stop: datetime.datetime
+    :param sampling: sampling time in seconds
+    :type sampling: float
     :return: Parameter object
     :rtype: amdapy.amda.Parameter
 
@@ -391,10 +397,10 @@ class AMDA:
       start=stop - datetime.timedelta(days=1)
     else:
       pass
-    d=amdapy.amdaWSClient.client.get_parameter(param.id, start,stop, col_names)
+    d=amdapy.amdaWSClient.client.get_parameter(param.id, start,stop, col_names, sampling=sampling)
     d.set_index("Time", inplace=True)
     return Parameter(id=param.id, name=param.name, data=d,units=param.units)
-  def get_dataset(self, dataset_item, start=None, stop=None):
+  def get_dataset(self, dataset_item, start=None, stop=None, sampling=None):
     """Get dataset contents.
 
     :param dataset_item: dataset item
@@ -403,6 +409,8 @@ class AMDA:
     :type start: datetime.datetime
     :param stop: data stop time
     :type stop: datetime.datetime
+    :param sampling: sampling in seconds
+    :type sampling: float
     :return: dataset object if found, None otherwise
     :rtype: amdapy.amda.Dataset or None
 
@@ -459,7 +467,7 @@ class AMDA:
        Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
 
     """
-    return self._datasetel_to_dataset(dataset_item, start, stop)
+    return self._datasetel_to_dataset(dataset_item, start, stop, sampling=sampling)
 
 class _CollectionItem:
   """Collection item base class. This is a base class shared by all items of the collection. All

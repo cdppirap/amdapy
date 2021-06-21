@@ -508,7 +508,30 @@ def get_column_names(in_str):
             l=line.replace("# DATA_COLUMNS : ","")
             l=l.replace("AMDA_TIME","Time")
             return l.split(", ")
-def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
+def list_derived(userid, password):
+    client=AMDARESTClient()
+    t=client.auth()
+    if t is None:
+      print("Error getting authentification token")
+      return []
+    # get list of derived parameters for user
+    up=client.get_parameter_list(userid, password, local=False)
+    r=requests.get(up).text
+    tree=etree.fromstring(r)
+    a=[]
+    for e in tree.iter():
+        if not isinstance(e, etree._Comment):
+            if e.tag=="param":
+                #print("DERIVED : {}".format(e.attrib))
+                did=""
+                for k in e.attrib:
+                    if k.endswith("}id"):
+                        did=e.attrib[k]
+                a.append(did)
+    return a
+    
+
+def get_derived(userid, password, param_id, start_date, stop_date, col_names, date_parser=None, sampling=None):
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
         start=start.strftime(DATE_FORMAT)
@@ -519,7 +542,8 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
     if t is None:
       print("Error getting authentification token")
       return
-    pfu=client.get_parameter(t,start,stop,param_id)
+    # get list of derived parameters for user
+    pfu=client.get_parameter(t,start,stop,param_id,sampling=sampling,userid=userid, password=password)
     resp=requests.get(pfu)
     dparser=date_parser
     if dparser is None:
@@ -530,7 +554,30 @@ def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
         data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+", names=get_column_names(resp.text), parse_dates=["Time"], date_parser=dparser)
     #os.system("rm {}".format(data_file))
     return data
-def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
+
+def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None, sampling=None):
+    start,stop=start_date,stop_date
+    if isinstance(start,datetime.datetime):
+        start=start.strftime(DATE_FORMAT)
+    if isinstance(stop,datetime.datetime):
+        stop=stop.strftime(DATE_FORMAT)
+    client=AMDARESTClient()
+    t=client.auth()
+    if t is None:
+      print("Error getting authentification token")
+      return
+    pfu=client.get_parameter(t,start,stop,param_id,sampling=sampling)
+    resp=requests.get(pfu)
+    dparser=date_parser
+    if dparser is None:
+        dparser=common_date_parser
+    try:
+        data=pd.read_csv(io.StringIO(resp.text), comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+    except:
+        data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+", names=get_column_names(resp.text), parse_dates=["Time"], date_parser=dparser)
+    #os.system("rm {}".format(data_file))
+    return data
+def get_dataset(dataset_id, start_date, stop_date, date_parser=None, sampling=None):
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
         start=start.strftime(DATE_FORMAT)
@@ -541,7 +588,7 @@ def get_dataset(dataset_id, start_date, stop_date, date_parser=None):
     if t is None:
         print("Error getting authentification token")
         return
-    pfu=client.get_dataset(t,start,stop,dataset_id)
+    pfu=client.get_dataset(t,start,stop,dataset_id,sampling=sampling)
     if pfu is None:
       return None
     #print("In amdaWSClient. get_dataset : pfu: {}".format(pfu))
