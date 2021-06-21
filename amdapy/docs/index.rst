@@ -69,7 +69,7 @@ AMDA stores its data structures and how we propose to navigate it.
 Installation
 ------------
 
-The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy tar <../../dist/amdapy-0.1.0.tar.gz>`. This package requires :program:`Python3.5` (or a later version).
+The current packaged version of :program:`amdapy` can be downloaded :download:`amdapy.tar <../../dist/amdapy-0.1.0.tar.gz>`. This package requires :program:`Python3.5` (or a later version).
 
 Install by executing the following ::
   
@@ -77,12 +77,17 @@ Install by executing the following ::
  
 To install the package with pip from the source archive use the following::
   
-  pip3 install amdapy.tar.gz
+  pip3 install amdapy-<version>.tar.gz
 
 On windows if you have :program:`Anaconda` installed then use::
   
   conda install amdapy
 
+Test that the package was installed correctly by running the following in a python3 interpreter::
+
+  >>> import amdapy
+  >>> print(amdapy.__version__)
+  0.1.0
 
 The collection 
 --------------
