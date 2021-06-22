@@ -6,6 +6,12 @@
 Welcome to amdapy's documentation!
 ==================================
 
+.. figure:: img/logo.png
+   :width: 300
+   :alt: amdapy logo
+   :align: left
+   :figclass: align-left
+
 :program:`amdapy` is a python package for accessing data in AMDA. It is intended for anyone interested in
 manipulating heliophysics data. AMDA provides a vast collection of plasma physics datasets and
 analysis tools via its web platform `AMDA <http://amda.irap.omp.eu>`_. The :program:`amdapy` package provides
@@ -14,7 +20,7 @@ an interface for those wishing to manipulate AMDA datasets in their python scrip
 Github : `https://github.com/cdppirap/amdapy <https://github.com/cdppirap/amdapy>`_.
 
 .. figure:: img/amda_home.png
-   :width: 600
+   :width: 400
    :alt: AMDA home page
    :align: center
    :figclass: align-center
@@ -182,18 +188,6 @@ of the desired parameter or by using the :meth:`amdapy.amda.Dataset.iter_paramet
    >>> dataset["density"]
    Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
 
-By default when calling :meth:`amdapy.amda.AMDA.get` without the :data:`t_interval` argument, only
-the first day of data is returned. If more data is required you can specify the time interval like
-in the following example : 
-
-.. code-block:: python
-
-   >>> from amdapy.amda import Timespan
-   >>> import datetime
-   >>> time_interval = Timespan(dataset_description.starttime, dataset_description.starttime+datetime.timedelta(days=10))
-   >>> dataset = amda.get(dataset_description, time_interval)
-   >>> dataset.data.shape
-   (240,8)
 
 A simple plot example : 
 
@@ -211,4 +205,28 @@ A simple plot example :
 
    Plot *density* from *tao-ura-sw* dataset
 
+User parameters
+---------------
+
+To retrieve the list of `derived parameters` defined by `user` execute the following::
+    
+   >>> user_parameters = amda.list_derived(userid="username", password="password")
+   >>> for param in user_parameters:
+   >>>     print(param)
+   DerivedParameter (user=username, id=ws_0, name=param_0)
+   ...
+   DerivedParameter (user=username, id=ws_k, name=param_k)
+
+The actual data is fetched using `amda.get` method::
+
+   >>> data = amda.get_derived("username", "password", "ws_k", "2010-01-01T00:00:00", "2010-01-02T00:00:00")
+   >>> print(data)
+                       Time  ws_zaaaa
+   0    2010-01-01 00:00:00    -3.678
+   1    2010-01-01 00:00:16    -3.562
+   ...                  ...       ...
+   5397 2010-01-01 23:59:12     1.632
+   5398 2010-01-01 23:59:28     1.509
+
+   [5401 rows x 2 columns]
 
