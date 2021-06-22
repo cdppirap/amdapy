@@ -1,0 +1,623 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>amdapy package &#8212; amdapy 1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Jupyter notebooks" href="notebooks.html" />
+    <link rel="prev" title="amdapy" href="modules.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="notebooks.html" title="Jupyter notebooks"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="amdapy"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">amdapy</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="amdapy-package">
+<h1>amdapy package<a class="headerlink" href="#amdapy-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-amdapy.amda">
+<span id="amdapy-amda-module"></span><h2>amdapy.amda module<a class="headerlink" href="#module-amdapy.amda" title="Permalink to this headline">¶</a></h2>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">author:</th><td class="field-body">Alexandre Schulz</td>
+</tr>
+<tr class="field-even field"><th class="field-name">email:</th><td class="field-body"><a class="reference external" href="mailto:alexandre&#46;schulz&#37;&#52;&#48;irap&#46;omp&#46;eu">alexandre<span>&#46;</span>schulz<span>&#64;</span>irap<span>&#46;</span>omp<span>&#46;</span>eu</a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">brief:</th><td class="field-body">AMDA dataset provider</td>
+</tr>
+</tbody>
+</table>
+<p><a class="reference internal" href="#amdapy.amda.AMDA" title="amdapy.amda.AMDA"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.AMDA</span></code></a> is the object through witch we can query the AMDA database for 
+available missions, instruments and datasets. Datasets are stored following a predefined
+hierarchy:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">AMDA</span> <span class="n">collection</span> 
+    <span class="n">Mission</span> <span class="n">A</span>
+        <span class="n">Instrument</span> <span class="n">X</span>
+            <span class="n">Dataset</span> <span class="mi">1</span>
+            <span class="o">...</span>
+            <span class="n">Dataset</span> <span class="n">N</span>
+        <span class="o">...</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="amdapy.amda.AMDA">
+<em class="property">class </em><code class="descclassname">amdapy.amda.</code><code class="descname">AMDA</code><a class="reference internal" href="_modules/amdapy/amda.html#AMDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.AMDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>AMDA database connector. Use this object to connect to query AMDAs database. The <code class="xref py py-data docutils literal notranslate"><span class="pre">collection</span></code>
+(<a class="reference internal" href="#amdapy.amda.Collection" title="amdapy.amda.Collection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a>) allows acces to dataset description.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">amda</span> <span class="o">=</span> <span class="n">amdapy</span><span class="o">.</span><span class="n">amda</span><span class="o">.</span><span class="n">AMDA</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">amda</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">iter_dataset</span><span class="p">():</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="amdapy.amda.AMDA.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>item</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#AMDA.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.AMDA.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a item from the collection.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> (<em>amdapy.amda._CollectionItem</em>) – collection item</li>
+<li><strong>start</strong> (<em>datetime.datetime</em><em> or </em><em>str</em>) – data start time</li>
+<li><strong>stop</strong> (<em>datetime.datetime</em><em> or </em><em>str</em>) – data stop time</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">parameter or dataset depending on the input, None if item is badly defined</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#amdapy.amda.Parameter" title="amdapy.amda.Parameter">amda.Parameter</a> or <a class="reference internal" href="#amdapy.amda.Dataset" title="amdapy.amda.Dataset">amda.Dataset</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>The behaviour of this method depends on the type of the <code class="xref py py-data docutils literal notranslate"><span class="pre">item</span></code> argument <span class="classifier-delimiter">:</span> <span class="classifier"></span></dt>
+<dd><ul class="first last simple">
+<li><a class="reference internal" href="#amdapy.amda.Collection.Dataset" title="amdapy.amda.Collection.Dataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Dataset</span></code></a> then call the <a class="reference internal" href="#amdapy.amda.AMDA.get_dataset" title="amdapy.amda.AMDA.get_dataset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_dataset()</span></code></a></li>
+<li><a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Parameter</span></code></a> then call the <a class="reference internal" href="#amdapy.amda.AMDA.get_parameter" title="amdapy.amda.AMDA.get_parameter"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_parameter()</span></code></a></li>
+</ul>
+</dd>
+</dl>
+<p>For example retriving the <em>tao-ura-sw</em> dataset is done like this :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dataset_desc</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;tao-ura-sw&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dataset_desc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span>
+<span class="go">Dataset (id:tao-ura-sw, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)</span>
+<span class="go">    Parameter (id:ura_sw_n, name:density, units:cm⁻³, value: None)</span>
+<span class="go">    Parameter (id:ura_sw_v, name:velocity, units:km/s, value: None)</span>
+<span class="go">    Parameter (id:ura_sw_t, name:temperature, units:eV, value: None)</span>
+<span class="go">    Parameter (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, value: None)</span>
+<span class="go">    Parameter (id:ura_sw_b, name:b tangential, units:nT, value: None)</span>
+<span class="go">    Parameter (id:ura_sw_bx, name:b radial, units:nT, value: None)</span>
+<span class="go">    Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, value: None)</span>
+</pre></div>
+</div>
+<p>The <code class="xref py py-data docutils literal notranslate"><span class="pre">start</span></code> and <code class="xref py py-data docutils literal notranslate"><span class="pre">stop</span></code> attributes indicate the desired begining and end of the 
+data. If they are <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> objects then they must follow the following scheme</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">YYYY</span><span class="o">-</span><span class="n">MM</span><span class="o">-</span><span class="n">DDThh</span><span class="p">:</span><span class="n">mm</span><span class="p">:</span><span class="n">ss</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="amdapy.amda.AMDA.get_dataset">
+<code class="descname">get_dataset</code><span class="sig-paren">(</span><em>dataset_item</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#AMDA.get_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.AMDA.get_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get dataset contents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset_item</strong> – dataset item</li>
+<li><strong>start</strong> (<em>datetime.datetime</em>) – data start time</li>
+<li><strong>stop</strong> (<em>datetime.datetime</em>) – data stop time</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dataset object if found, None otherwise</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#amdapy.amda.Dataset" title="amdapy.amda.Dataset">amdapy.amda.Dataset</a> or None</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Retrieves the dataset contents between <code class="xref py py-data docutils literal notranslate"><span class="pre">t_interval.start</span></code> to <code class="xref py py-data docutils literal notranslate"><span class="pre">t_interval.stop</span></code>. If the
+<code class="xref py py-data docutils literal notranslate"><span class="pre">t_interval</span></code> is not a valid interval then only the first day of data will be retrieved. This
+behaviour was chosen to avoid too many requests for downloading the whole dataset (which can be
+extensive).</p>
+<p>In the following example we download the first day of the <code class="xref py py-data docutils literal notranslate"><span class="pre">tao-ura-sw</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">amda</span> <span class="o">=</span> <span class="n">AMDA</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset_desc</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;tao-ura-sw&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="n">dataset_desc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span>
+<span class="go">Dataset (id:tao-ura-sw, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)</span>
+<span class="go">    Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))</span>
+<span class="go">    Parameter (id:ura_sw_v, name:velocity, units:km/s, nodata)</span>
+<span class="go">    Parameter (id:ura_sw_t, name:temperature, units:eV, shape: (24,))</span>
+<span class="go">    Parameter (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, shape: (24,))</span>
+<span class="go">    Parameter (id:ura_sw_b, name:b tangential, units:nT, shape: (24,))</span>
+<span class="go">    Parameter (id:ura_sw_bx, name:b radial, units:nT, shape: (24,))</span>
+<span class="go">    Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, shape: (24,))</span>
+</pre></div>
+</div>
+<p>The actual data is stored as a <code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> object. You can access the data
+through the bracket operator. When passing a <code class="xref py py-class docutils literal notranslate"><span class="pre">slice</span></code> object to <a class="reference internal" href="#amdapy.amda.AMDA.get_dataset" title="amdapy.amda.AMDA.get_dataset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_dataset()</span></code></a> the bracket operator is called on the <code class="xref py py-data docutils literal notranslate"><span class="pre">data</span></code> attribute.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span><span class="p">[:]</span>
+<span class="go">                           density  velocity_V r  ...  b radial  angle Uranus-Sun-Earth</span>
+<span class="go">Time                                            ...                                  </span>
+<span class="go">2010-01-01T01:00:00.000    0.005       347.811  ...    -0.002                   2.305</span>
+<span class="go">2010-01-01T02:00:00.000    0.006       347.616  ...    -0.002                   2.518</span>
+<span class="go">2010-01-01T03:00:00.000    0.006       347.407  ...    -0.002                   2.731</span>
+<span class="go">2010-01-01T04:00:00.000    0.007       347.185  ...    -0.002                   2.938</span>
+<span class="go">2010-01-01T05:00:00.000    0.008       346.966  ...    -0.002                   3.148</span>
+<span class="go">2010-01-01T06:00:00.000    0.008       346.709  ...    -0.002                   3.360</span>
+<span class="go">2010-01-01T07:00:00.000    0.008       346.539  ...    -0.002                   3.571</span>
+</pre></div>
+</div>
+<p>The previous call is equivalent to :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span>
+</pre></div>
+</div>
+<p>Passing a parameter name or id to <a class="reference internal" href="#amdapy.amda.AMDA.get_dataset" title="amdapy.amda.AMDA.get_dataset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_dataset()</span></code></a> will return the corresponding
+<a class="reference internal" href="#amdapy.amda.Parameter" title="amdapy.amda.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Parameter</span></code></a> object. Individual parameters are retrieved by :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;density&quot;</span><span class="p">]</span>
+<span class="go">Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="amdapy.amda.AMDA.get_parameter">
+<code class="descname">get_parameter</code><span class="sig-paren">(</span><em>param</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#AMDA.get_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.AMDA.get_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get parameter data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>param</strong> (<a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><em>amda.Collection.Parameter</em></a>) – parameter descriptor</li>
+<li><strong>start</strong> (<em>datetime.datetime</em>) – data start time</li>
+<li><strong>stop</strong> (<em>datetime.datetime</em>) – data stop time</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Parameter object</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#amdapy.amda.Parameter" title="amdapy.amda.Parameter">amdapy.amda.Parameter</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Given a valid <a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Parameter</span></code></a> instance you can retrieve the parameters 
+data by calling the <a class="reference internal" href="#amdapy.amda.AMDA.get_parameter" title="amdapy.amda.AMDA.get_parameter"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_parameter()</span></code></a> method on the desired time interval.</p>
+<p>If the time interval provided is not valid then only the first day of data will be returned. Data
+is stored as a <code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> object indexed by time (since all AMDA parameters are
+timeseries), and you can access it through the <code class="xref py py-data docutils literal notranslate"><span class="pre">data</span></code> attribute.</p>
+<p>Continuing with the example dataset <code class="xref py py-data docutils literal notranslate"><span class="pre">tao-ura-sw</span></code> you can retrive the <em>density</em> parameter (id : ura_sw_n) like this :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parameter_desc</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;ura_sw_n&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parameter_desc</span>
+<span class="go">Parameter item (id:ura_sw_n, name:density, units:cm⁻³, disp:None, dataset:tao-ura-sw, n:1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parameter</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">parameter_desc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parameter</span>
+<span class="go">Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24, 1))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parameter_desc</span><span class="p">[:]</span>
+<span class="go">                     density</span>
+<span class="go">Time                        </span>
+<span class="go">2010-01-01 01:00:00    0.005</span>
+<span class="go">2010-01-01 02:00:00    0.006</span>
+<span class="gp">...</span>
+<span class="go">2010-01-01 23:00:00    0.008</span>
+<span class="go">2010-01-02 00:00:00    0.008</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="amdapy.amda.Collection">
+<em class="property">class </em><code class="descclassname">amdapy.amda.</code><code class="descname">Collection</code><a class="reference internal" href="_modules/amdapy/amda.html#Collection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The <a class="reference internal" href="#amdapy.amda.Collection" title="amdapy.amda.Collection"><code class="xref py py-class docutils literal notranslate"><span class="pre">Collection</span></code></a> object is used for getting descriptions of the items in AMDAs database.
+Navigation the database is done with the <a class="reference internal" href="#amdapy.amda.Collection.iter_dataset" title="amdapy.amda.Collection.iter_dataset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Collection.iter_dataset()</span></code></a> iterator.</p>
+<dl class="class">
+<dt id="amdapy.amda.Collection.Dataset">
+<em class="property">class </em><code class="descname">Dataset</code><span class="sig-paren">(</span><em>id</em>, <em>name</em>, <em>parameters=[]</em>, <em>globalstart=None</em>, <em>globalstop=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Collection.Dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Collection.Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda._CollectionItem</span></code></p>
+<dl class="docutils">
+<dt>This object contains a description of a dataset. Attributes are:</dt>
+<dd><ul class="first last simple">
+<li>id : unique identifier for the dataset</li>
+<li>name : name of the dataset in AMDAs navigation tree</li>
+<li>globalstart: data start time (<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code> )</li>
+<li>globalstop: data stop time (<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code>)</li>
+<li>parameters : list of parameter descriptions (<a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Parameter</span></code></a>)</li>
+<li>n : number of parameters</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>str</em>) – dataset identification, should be unique, used for retriving contents of the dataset</li>
+<li><strong>name</strong> (<em>str</em>) – name of the dataset</li>
+<li><strong>parameters</strong> (list of <a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Parameter</span></code></a> objects) – list of parameter objects belonging to the dataset</li>
+<li><strong>globalstart</strong> (<em>datetime.datetime</em>) – start time</li>
+<li><strong>globalstop</strong> (<em>datetime.datetime</em>) – stop time</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This object contains the descriptions of a dataset available in AMDA. You can acces the datasets
+unique identifier through the <code class="xref py py-data docutils literal notranslate"><span class="pre">id</span></code> attribute that is common to all items of the collection.
+Datasets are then defined by a <code class="xref py py-data docutils literal notranslate"><span class="pre">name</span></code>, a <code class="xref py py-data docutils literal notranslate"><span class="pre">description</span></code> string, a list of 
+<code class="xref py py-data docutils literal notranslate"><span class="pre">parameters</span></code> (parameter description objects of type <a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Parameter</span></code></a>.</p>
+<p>Here is an example of a dataset description string</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Dataset (id:tao-ura-sw, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)
+   Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
+   Parameter (id:ura_sw_v, name:velocity, units:km/s, nodata)
+   Parameter (id:ura_sw_t, name:temperature, units:eV, shape: (24,))
+   Parameter (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, shape: (24,))
+   Parameter (id:ura_sw_b, name:b tangential, units:nT, shape: (24,))
+   Parameter (id:ura_sw_bx, name:b radial, units:nT, shape: (24,))
+   Parameter (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, shape: (24,))
+</pre></div>
+</div>
+<p>This object is intended to provide a description of the dataset containing parameter identifiers,
+name, units and other important information. Downloading the dataset is done by passing a 
+<a class="reference internal" href="#amdapy.amda.Collection.Dataset" title="amdapy.amda.Collection.Dataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Dataset</span></code></a> object to the <a class="reference internal" href="#amdapy.amda.AMDA.get_dataset" title="amdapy.amda.AMDA.get_dataset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_dataset()</span></code></a> methode.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="amdapy.amda.Collection.Parameter">
+<em class="property">class </em><code class="descname">Parameter</code><span class="sig-paren">(</span><em>id</em>, <em>name</em>, <em>units</em>, <em>description</em>, <em>displaytype</em>, <em>dataset_id</em>, <em>components=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Collection.Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Collection.Parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda._CollectionItem</span></code></p>
+<p>This object contains parameter descriptions.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Parameter descriptions do not contain any information about the data timespan, to get the
+begining and end date of the data you must retrieve the parent dataset whose id is given by the
+<code class="xref py py-data docutils literal notranslate"><span class="pre">dataset_id</span></code> attribute.</p>
+</div>
+<dl class="docutils">
+<dt>You can access the following information through this container <span class="classifier-delimiter">:</span> <span class="classifier"></span></dt>
+<dd><ul class="first last simple">
+<li>id : unique parameter id</li>
+<li>name : parameter name</li>
+<li>units : data units</li>
+<li>dataset_id : parent dataset id</li>
+<li>components : list of components, only if these are available in AMDA</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>str</em>) – parameter identification</li>
+<li><strong>name</strong> (<em>str</em>) – name of the parameter</li>
+<li><strong>units</strong> (<em>str</em>) – units</li>
+<li><strong>description</strong> (<em>str</em>) – parameter description</li>
+<li><strong>displaytype</strong> (<em>str</em>) – parameter display type</li>
+<li><strong>dataset_id</strong> (<em>str</em>) – identification of the parent dataset</li>
+<li><strong>components</strong> (<em>list of amdapy.amda.Collection._Component objects</em>) – list of components</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="amdapy.amda.Collection.find">
+<code class="descname">find</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Collection.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Collection.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find and collection item by id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>id</strong> (<em>str</em>) – id of the desired item</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Collection item with the right id if found, None otherwise</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">amdapy.amda._CollectionItem or None</td>
+</tr>
+</tbody>
+</table>
+<p>Iterates over all dataset objects in search for one with 
+the right id, if the id doesn’t match then proceeds to check all parameters in the dataset
+before moving on to the next.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">amda</span> <span class="o">=</span> <span class="n">amdapy</span><span class="o">.</span><span class="n">amda</span><span class="o">.</span><span class="n">AMDA</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">var</span> <span class="o">=</span> <span class="n">amda</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;ura_sw_da&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">var</span>
+<span class="go">Parameter item (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, disp:None, dataset:tao-ura-sw, n:1)</span>
+</pre></div>
+</div>
+<p>If we want a description of the dataset this parameter belongs to then we can do :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">amda</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">)</span>
+<span class="go">Dataset item (id:tao-ura-sw, name:SW / Input OMNI, start:2010-01-01 00:00:00, stop:2021-02-19 00:00:00, n_param:7)h</span>
+<span class="go">    Parameter item (id:ura_sw_n, name:density, units:cm⁻³, disp:None, dataset:tao-ura-sw, n:1)</span>
+<span class="go">    Parameter item (id:ura_sw_v, name:velocity, units:km/s, disp:None, dataset:tao-ura-sw, n:2)</span>
+<span class="go">    Parameter item (id:ura_sw_t, name:temperature, units:eV, disp:None, dataset:tao-ura-sw, n:1)</span>
+<span class="go">    Parameter item (id:ura_sw_pdyn, name:dynamic pressure, units:nPa, disp:None, dataset:tao-ura-sw, n:1)</span>
+<span class="go">    Parameter item (id:ura_sw_b, name:b tangential, units:nT, disp:None, dataset:tao-ura-sw, n:1)</span>
+<span class="go">    Parameter item (id:ura_sw_bx, name:b radial, units:nT, disp:None, dataset:tao-ura-sw, n:1)</span>
+<span class="go">    Parameter item (id:ura_sw_da, name:angle Uranus-Sun-Earth, units:deg, disp:None, dataset:tao-ura-sw, n:1)</span>
+</pre></div>
+</div>
+<p>The object returned by <a class="reference internal" href="#amdapy.amda.Collection.find" title="amdapy.amda.Collection.find"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.Collection.find()</span></code></a> can be passed to the <a class="reference internal" href="#amdapy.amda.AMDA.get" title="amdapy.amda.AMDA.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get()</span></code></a> method to
+retrive the contents of the parameter or dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="amdapy.amda.Collection.iter_dataset">
+<code class="descname">iter_dataset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Collection.iter_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Collection.iter_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection item iterator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">collection items</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">amdapy.amda.Collection.Item</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="amdapy.amda.Dataset">
+<em class="property">class </em><code class="descclassname">amdapy.amda.</code><code class="descname">Dataset</code><span class="sig-paren">(</span><em>el</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>AMDA dataset container. Retrieving data from AMDA can be time consuming, as such
+the object constructor can be called without setting the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>el</strong> (<em>amdapy.amdaWSClient.client.DatasetElement</em>) – dataset unique identificator</li>
+<li><strong>data</strong> (<em>array type</em>) – optional (default: None), dataset content</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Get list of parameter ids :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">iter_parameter</span><span class="p">()]</span>
+<span class="go">[&#39;ura_sw_n&#39;, &#39;ura_sw_v&#39;, &#39;ura_sw_t&#39;, &#39;ura_sw_pdyn&#39;, &#39;ura_sw_b&#39;, &#39;ura_sw_bx&#39;, &#39;ura_sw_da&#39;]</span>
+</pre></div>
+</div>
+<p>You can then get the contents of the parameters by using the bracket operator :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span><span class="p">[</span><span class="s2">&quot;ura_sw_n&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="amdapy.amda.Dataset.iter_parameter">
+<code class="descname">iter_parameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Dataset.iter_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Dataset.iter_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parameter iterator</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">parameter object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#amdapy.amda.Parameter" title="amdapy.amda.Parameter">amdapy.amda.Parameter</a></td>
+</tr>
+</tbody>
+</table>
+<p>Parameter iterator. For example get a list of parameter name and units :</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">iter_parameter</span><span class="p">()]</span>
+<span class="go">[&#39;density&#39;, &#39;velocity&#39;, &#39;temperature&#39;, &#39;dynamic pressure&#39;, &#39;b tangential&#39;, &#39;b radial&#39;, &#39;angle Uranus-Sun-Earth&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">units</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">iter_parameter</span><span class="p">()]</span>
+<span class="go">[&#39;cm⁻³&#39;, &#39;km/s&#39;, &#39;eV&#39;, &#39;nPa&#39;, &#39;nT&#39;, &#39;nT&#39;, &#39;deg&#39;]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="amdapy.amda.Dataset.make_parameter_list">
+<code class="descname">make_parameter_list</code><span class="sig-paren">(</span><em>el</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Dataset.make_parameter_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Dataset.make_parameter_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="amdapy.amda.Dataset.time">
+<code class="descname">time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Dataset.time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Dataset.time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get time value for this dataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">time</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">pandas.DataFrame</td>
+</tr>
+</tbody>
+</table>
+<p>Get the datasets time values.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">T</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+<span class="go">&lt;class &#39;pandas.core.indexes.datetimes.DatetimeIndex&#39;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">T</span>
+<span class="go">DatetimeIndex([&#39;2010-01-01 01:00:00&#39;, &#39;2010-01-01 02:00:00&#39;,</span>
+<span class="go">               &#39;2010-01-01 03:00:00&#39;, &#39;2010-01-01 04:00:00&#39;,</span>
+<span class="gp">...</span>
+<span class="go">               &#39;2010-01-01 23:00:00&#39;, &#39;2010-01-02 00:00:00&#39;],</span>
+<span class="go">              dtype=&#39;datetime64[ns]&#39;, name=&#39;Time&#39;, freq=None)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="amdapy.amda.Parameter">
+<em class="property">class </em><code class="descclassname">amdapy.amda.</code><code class="descname">Parameter</code><span class="sig-paren">(</span><em>id</em>, <em>name</em>, <em>units</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Container class for storing parameter objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>str</em>) – identifier of the parameter, should be unique</li>
+<li><strong>name</strong> (<em>str</em>) – name of the parameter as seen in the AMDA navigation tree</li>
+<li><strong>units</strong> (<em>str</em>) – units in which are expressed the parameters values</li>
+<li><strong>data</strong> (<em>pandas.DataFrame</em>) – values of the parameter</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>This class is a container for parameter data including identification, name, units and data. We 
+retrieve <a class="reference internal" href="#amdapy.amda.Parameter" title="amdapy.amda.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Parameter</span></code></a> instances by passing a <a class="reference internal" href="#amdapy.amda.Collection.Parameter" title="amdapy.amda.Collection.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">amdapy.amda.Collection.Parameter</span></code></a>
+object to the <a class="reference internal" href="#amdapy.amda.AMDA.get" title="amdapy.amda.AMDA.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get()</span></code></a> or <a class="reference internal" href="#amdapy.amda.AMDA.get_dataset" title="amdapy.amda.AMDA.get_dataset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">amdapy.amda.AMDA.get_dataset()</span></code></a> method.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parameter</span>
+<span class="go">Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24, 1))</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="amdapy.amda.Parameter.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>dataset_id=None</em>, <em>figsize=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/amdapy/amda.html#Parameter.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#amdapy.amda.Parameter.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the parameter. Naive plotting function for visualizing time series data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">pyplot figure object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">pyplot figure</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-amdapy">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-amdapy" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">amdapy package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-amdapy.amda">amdapy.amda module</a></li>
+<li><a class="reference internal" href="#module-amdapy">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="modules.html"
+                        title="previous chapter">amdapy</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="notebooks.html"
+                        title="next chapter">Jupyter notebooks</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/amdapy.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="notebooks.html" title="Jupyter notebooks"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="amdapy"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">amdapy 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >amdapy</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Alexandre Schulz.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>
