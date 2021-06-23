@@ -6,12 +6,6 @@
 Welcome to amdapy's documentation!
 ==================================
 
-.. figure:: img/logo.png
-   :width: 300
-   :alt: amdapy logo
-   :align: left
-   :figclass: align-left
-
 :program:`amdapy` is a python package for accessing data in AMDA. It is intended for anyone interested in
 manipulating heliophysics data. AMDA provides a vast collection of plasma physics datasets and
 analysis tools via its web platform `AMDA <http://amda.irap.omp.eu>`_. The :program:`amdapy` package provides
@@ -85,15 +79,11 @@ To install the package with pip from the source archive use the following::
   
   pip3 install amdapy-<version>.tar.gz
 
-On windows if you have :program:`Anaconda` installed then use::
-  
-  conda install amdapy
-
 Test that the package was installed correctly by running the following in a python3 interpreter::
 
   >>> import amdapy
   >>> print(amdapy.__version__)
-  0.1.0
+  0.1.1
 
 The collection 
 --------------
