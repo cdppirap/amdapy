@@ -254,6 +254,7 @@ class AMDA:
     else:
       pass
     data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols)
+    print(data)
     data.columns=cols
     data["Time"]=pd.to_datetime(data["Time"])
     data.set_index("Time",inplace=True)

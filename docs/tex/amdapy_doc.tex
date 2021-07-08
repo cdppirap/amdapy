@@ -6,6 +6,95 @@
 \begin{document}
 \maketitle
 
+\section{REST}
+\subsection{Errors}
+Rest errors are defined in the \emph{amdapy.rest.errors} module.
+
+\begin{itemize}
+	\item AuthenticationError : raised when requesting an authentication token fails
+	\item CollectionRetrievalError : failed to get dataset collection
+	\item DatasetDownloadError : failed to download dataset
+	\item LargeTimePeriodError : requested time period was too large
+	\item ParameterDownloadError : failed to download parameter
+
+		% status error
+	\item ProcessStatusError : failed to get status for process
+
+\end{itemize}
+
+\section{amdapy functionalities}
+
+List here basic functions that are within the scope of \emph{amdapy} : 
+\begin{itemize}
+	\item Download public datasets, parameters from AMDA
+	\item Download private parameters from user space
+	\item Resample dataset (defaults to original sampling time)
+	\item Data structures available : 
+	\begin{itemize}
+		\item Datasets
+		\item Parameters
+		\item Time tables
+		\item Catalogs
+	\end{itemize}
+	\item Explore AMDA database, search criterion : 
+		\begin{itemize}
+			\item mission
+			\item instrument
+			\item start and stop time
+			\item units
+			\item observed region
+			\item measurement type
+			\item more, ...
+		\end{itemize}
+	\item Retrieve SPASE metadata pretaining to mission, instruments, people, datasets
+	\item Full documentation
+	\item Jupyter notebook
+\end{itemize}
+
+\newpage
+
+\paragraph{List of objects} : 
+\begin{itemize}
+	\item amdapy.Mission(id=None)
+	\begin{itemize}
+		\item id : name of the mission, it is unique within AMDA
+	\end{itemize}
+	\item amdapy.Instrument(id=None, mission=None)
+	\begin{itemize}
+		\item id : name of the instrument, unique within its corresponding mission
+	\end{itemize}
+	\item amdapy.AmdaDataFrame(id=None)
+	\begin{itemize}
+		\item has a \emph{pandas\_df} method that returns the content of the datastructure in a dataframe object
+		\item can specify the start and stop times, sampling rate, ...
+	\end{itemize}
+	\item amdapy.Dataset(AmdaDataFrame, parameters=[])
+	\begin{itemize}
+		\item contains a list of parameters
+	\end{itemize}
+	\item amdapy.Parameter(AmdaDataFrame)
+	\begin{itemize}
+		\item has id, units, name, shape
+	\end{itemize}
+	\item amdapy.TimeTable(AmdaDataFrame)
+	\item amdapy.Catalog(AmdaDataFrame)
+\end{itemize}
+
+\paragraph{Iterators} : 
+\begin{itemize}
+	\item amdapy.datasets(mission=None, instrument=None)
+	\item amdapy.missions() 
+	\item amdapy.instruments(mission=None)
+	\item amdapy.parameters(mission=None, instrument=None, dataset=None)
+	\item amdapy.derived\_parameters(userid=None, password=None)
+\end{itemize}
+
+\section{amdapy.Mission}
+
+In AMDA all mission are uniquely identified by their name, which is stored in the Mission.id attribute.
+
+Missions have SPASE
+
 \section{The AMDAPy package}
 The aim of this package is to propose a easy to use python interface for accessing data stored on
 the AMDA plateform (and similar plateforms), applying common transformation and visualizing data.
