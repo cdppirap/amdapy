@@ -461,6 +461,11 @@ class AMDA:
 
     """
     return self._datasetel_to_dataset(dataset_item, start, stop)
+  def list_derived(self,userid, password):
+      return amdapy.amdaWSClient.client.list_derived(userid, password)
+  def get_derived(self,userid, password, paramid, start, stop, sampling=None, col_names=None):
+      return amdapy.amdaWSClient.client.get_derived(userid,password,paramid,start,stop,sampling=sampling, col_names=col_names)
+  
 
 class _CollectionItem:
   """Collection item base class. This is a base class shared by all items of the collection. All
