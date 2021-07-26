@@ -196,9 +196,7 @@ class AMDARESTClient:
         http://amda.irap.omp.eu/help/apidoc/#api-webservices-getObsDataTree
         :return: Url string or None if failed
         """
-        print("Getting obs data tree")
         result = self.__get_request('getObsDataTree.php')
-        print(result)
         if not result:
             return None
 
