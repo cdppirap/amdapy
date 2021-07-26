@@ -578,12 +578,6 @@ def get_derived(userid, password, param_id, start_date, stop_date, col_names, da
         data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+", names=get_column_names(resp.text), parse_dates=["Time"], date_parser=dparser)
     return data
 
-<<<<<<< HEAD
-def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None, sampling=None):
-=======
-
-def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
->>>>>>> dev
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
         start=start.strftime(DATE_FORMAT)

@@ -255,16 +255,12 @@ class AMDA:
       start=stop - datetime.timedelta(days=1)
     else:
       pass
-<<<<<<< HEAD
     data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols, sampling=sampling)
-=======
-    data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols)
-    print(data)
->>>>>>> dev
     data.columns=cols
     data["Time"]=pd.to_datetime(data["Time"])
     data.set_index("Time",inplace=True)
     return Dataset(datasetel, data=data)
+
   def _get_column_names(self, datasetel):
     """Get list of column names
 
@@ -341,6 +337,32 @@ class AMDA:
     else:
       print("Error : argument item is not a Collection.Dataset or Collection.Parameter object")
       return None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   def get_parameter(self, param, start=None, stop=None, sampling=None):
     """Get parameter data.
 
@@ -472,11 +494,9 @@ class AMDA:
        Parameter (id:ura_sw_n, name:density, units:cm⁻³, shape: (24,))
 
     """
-<<<<<<< HEAD
     return self._datasetel_to_dataset(dataset_item, start, stop, sampling=sampling)
-=======
-    return self._datasetel_to_dataset(dataset_item, start, stop)
->>>>>>> dev
+
+
   def list_derived(self,userid, password):
       return amdapy.amdaWSClient.client.list_derived(userid, password)
   def get_derived(self,userid, password, paramid, start, stop, sampling=None, col_names=None):
