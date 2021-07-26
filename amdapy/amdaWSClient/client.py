@@ -517,7 +517,7 @@ def list_derived(userid, password):
     :param password: password
     :type password: str
     :return: list of derived parameters
-    :rtype: list
+    :rtype: list[amdapy.core.parameter.DerivedParameter]
     """
     client=AMDARESTClient()
     t=client.auth()
