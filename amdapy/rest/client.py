@@ -614,7 +614,6 @@ def get_dataset(dataset_id, start_date, stop_date, date_parser=None, sampling=No
     pfu=client.get_dataset(t,start,stop,dataset_id,sampling=sampling)
     if pfu is None:
       return None
-    #print("In rest. get_dataset : pfu: {}".format(pfu))
     resp=requests.get(pfu)
     data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+")
     return data
@@ -627,6 +626,5 @@ def get_obs_tree():
     t=client.auth()
     url=client.get_obs_data_tree()
     parser=etree.XMLParser(recover=True)
-    print("url ", url)
     return ObsTree(etree.parse(io.StringIO(requests.get(url).text), parser=parser))
 
