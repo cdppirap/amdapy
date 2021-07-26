@@ -508,6 +508,77 @@ def get_column_names(in_str):
             l=line.replace("# DATA_COLUMNS : ","")
             l=l.replace("AMDA_TIME","Time")
             return l.split(", ")
+
+from amdapy.core.parameter import DerivedParameter
+def list_derived(userid, password):
+    """List user defined parameters
+    :param userid: username
+    :type userid: str
+    :param password: password
+    :type password: str
+    :return: list of derived parameters
+    :rtype: list[amdapy.core.parameter.DerivedParameter]
+    """
+    client=AMDARESTClient()
+    t=client.auth()
+    if t is None:
+      print("Error getting authentification token")
+      return []
+    # get list of derived parameters for user
+    up=client.get_parameter_list(userid, password, local=False)
+    r=requests.get(up).text
+    tree=etree.fromstring(r)
+    a=[]
+    for e in tree.iter():
+        if not isinstance(e, etree._Comment):
+            if e.tag=="param":
+                a.append(DerivedParameter.from_tree_element(e, userid))
+    return a
+    
+
+def get_derived(userid, password, param_id, start_date, stop_date, col_names, date_parser=None, sampling=None):
+    """Get parameters from user space.
+    :param userid: username
+    :type userid: str
+    :param password: password
+    :type password: str
+    :param param_id: parameter id with format `ws_<name>`
+    :type param_id: str
+    :param start_date: start date
+    :type start_date: str
+    :param stop_date: stop date
+    :type stop_date: str
+    :param col_names: column names
+    :type col_names: list
+    :param date_parser: date parser
+    :type date_parser: date parser
+    :param sampling: sampling time in seconds
+    :type sampling: float
+    :return: derived parameter data
+    :rtype: pandas.DataFrame
+    """
+    start,stop=start_date,stop_date
+    if isinstance(start,datetime.datetime):
+        start=start.strftime(DATE_FORMAT)
+    if isinstance(stop,datetime.datetime):
+        stop=stop.strftime(DATE_FORMAT)
+    client=AMDARESTClient()
+    t=client.auth()
+    if t is None:
+      return
+    # get list of derived parameters for user
+    pfu=client.get_parameter(t,start,stop,param_id,sampling=sampling,userid=userid, password=password)
+    resp=requests.get(pfu)
+    dparser=date_parser
+    if dparser is None:
+        dparser=common_date_parser
+    try:
+        data=pd.read_csv(io.StringIO(resp.text), comment="#",header=None, sep="\s+",names=col_names, parse_dates=["Time"], date_parser=dparser)
+    except:
+        data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+", names=get_column_names(resp.text), parse_dates=["Time"], date_parser=dparser)
+    return data
+
+
 def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None):
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
