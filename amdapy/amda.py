@@ -318,6 +318,7 @@ class AMDA:
   def list_derived(self,userid, password):
       return amdapy.rest.client.list_derived(userid, password)
   def get_derived(self,userid, password, paramid, start, stop, sampling=None, col_names=None):
+      #print("In amda.get_derived")
       return amdapy.rest.client.get_derived(userid,password,paramid,start,stop,sampling=sampling, col_names=col_names)
   
 

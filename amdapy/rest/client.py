@@ -229,6 +229,7 @@ class AMDARESTClient:
         Available compression modes are defined in AMDAOutputCompression (default 0)
         :return: Url string or None if failed
         """
+        print("Getting dataset")
         params = {
             'token': token,
             'startTime': starttime,
@@ -250,6 +251,20 @@ class AMDARESTClient:
             return None
 
         result_json = result.json()
+
+        if ('status' in result_json) and (result_json['status'] == 'in progress'):
+            #In batch mode
+            while True:
+                #Wait for 30 seconds
+                print("Download in progress, please do not interrupt")
+                time.sleep(30)
+                result = self.get_status(result_json['id'])
+                if not result:
+                    return None
+                elif result == 'in progress':
+                    continue
+                return result
+
         if not result_json or ('success' not in result_json) or (not result_json['success']) \
                 or ('dataFileURLs' not in result_json) or (result_json['dataFileURLs'] == ''):
             print("Error retrieving data, try a smaller time period")
@@ -378,18 +393,23 @@ class AMDARESTClient:
             'timeFormat': timeformat,
             'gzip': compression
         }
-
+        print("get parameters : {}".format(params))
+        print("optional params : {}".format(optional_params))
+        print("getting result")
         result = self.__get_request(method='getParameter.php', params=self.__merge_params(params, optional_params))
+        print("done getting result : {}".format(result))
 
         if not result:
             print("Error getting parameter data, try a smaller time period")
             return None
 
         result_json = result.json()
+        print("Result json : {}".format(result_json))
 
         if not result_json or ('success' not in result_json) or (not result_json['success']):
             print("Error getting parameter data, try a smaller time period")
             return None
+        print("Before batch mode : {}".format(result_json))
 
         if ('status' in result_json) and (result_json['status'] == 'in progress'):
             #In batch mode
@@ -490,6 +510,9 @@ class AMDARESTClient:
         return {**params, **{k: v for k, v in optional_params.items() if v is not None}}
 
     def __get_request(self, method, params=None):
+        print("Getting resquest")
+        print("\tmethod : {}".format(method))
+        print("\tparams : {}".format(params))
         session = requests.Session()
         if self.__proxies:
             session.proxies = self.__proxies
@@ -497,8 +520,10 @@ class AMDARESTClient:
             session.trust_env = False
         result = session.get(url=self.__entry_point + '/' + method, params=params, verify=True)
         if result.ok:
+            print("done")
             return result
         else:
+            print("done")
             return None
 DATE_FORMAT="%Y-%m-%dT%H:%M:%S"
 DATE_FORMATZ="%Y-%m-%dT%H:%M:%S.%f"
