@@ -196,7 +196,9 @@ class AMDARESTClient:
         http://amda.irap.omp.eu/help/apidoc/#api-webservices-getObsDataTree
         :return: Url string or None if failed
         """
+        print("Getting obs data tree")
         result = self.__get_request('getObsDataTree.php')
+        print(result)
         if not result:
             return None
 
@@ -578,6 +580,7 @@ def get_derived(userid, password, param_id, start_date, stop_date, col_names, da
         data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+", names=get_column_names(resp.text), parse_dates=["Time"], date_parser=dparser)
     return data
 
+def get_parameter(param_id, start_date, stop_date, col_names, date_parser=None, sampling=None):
     start,stop=start_date,stop_date
     if isinstance(start,datetime.datetime):
         start=start.strftime(DATE_FORMAT)
@@ -626,5 +629,6 @@ def get_obs_tree():
     t=client.auth()
     url=client.get_obs_data_tree()
     parser=etree.XMLParser(recover=True)
+    print("url ", url)
     return ObsTree(etree.parse(io.StringIO(requests.get(url).text), parser=parser))
 
