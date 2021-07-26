@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2021.2.6)  3 MAR 2021 14:33
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2021.2.6)  23 JUN 2021 10:48
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -54,27 +54,34 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 7.
  [1
 
-{/usr/local/texlive/2020/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [1] [2]
- [3] (./amdapy_doc.aux) ) 
+{/usr/local/texlive/2020/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [1]
+Overfull \hbox (1.92845pt too wide) in paragraph at lines 72--73
+[]\OT1/cmr/m/n/10.95 amdapy.parameters(mission=None, in-stru-ment=None, dataset
+=None) 
+ []
+
+[2] [3] [4] [5] (./amdapy_doc.aux) ) 
 Here is how much of TeX's memory you used:
- 454 strings out of 481181
- 8067 string characters out of 5913022
+ 459 strings out of 481181
+ 8133 string characters out of 5913022
  281251 words of memory out of 5000000
- 17482 multiletter control sequences out of 15000+600000
- 408018 words of font info for 42 fonts, out of 8000000 for 9000
+ 17485 multiletter control sequences out of 15000+600000
+ 408672 words of font info for 44 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  44i,6n,50p,221b,181s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2020/texmf-dist/fonts/enc/dvips/cm
--super/cm-super-ts1.enc}</usr/local/texlive/2020/texmf-dist/fonts/type1/public/
-amsfonts/cm/cmbx12.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmr10.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/public/ams
-fonts/cm/cmr12.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmr17.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/public/cm-supe
-r/sfrm1095.pfb>
-Output written on amdapy_doc.pdf (4 pages, 68143 bytes).
+{/usr/local/texlive/2020/texmf-dist/fonts/e
+nc/dvips/cm-super/cm-super-ts1.enc}</usr/local/texlive/2020/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2020/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2020/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmr17.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/publ
+ic/amsfonts/cm/cmti10.pfb></usr/local/texlive/2020/texmf-dist/fonts/type1/publi
+c/cm-super/sfrm1095.pfb>
+Output written on amdapy_doc.pdf (6 pages, 92654 bytes).
 PDF statistics:
- 38 PDF objects out of 1000 (max. 8388607)
- 26 compressed objects within 1 object stream
+ 52 PDF objects out of 1000 (max. 8388607)
+ 36 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
