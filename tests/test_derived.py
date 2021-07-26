@@ -1,9 +1,10 @@
-import os
 import sys
-sys.path.insert(0, "..")
+sys.path.insert(0,"..")
+import os
 
-username=os.env["AMDA_USER"]
-password=os.env["AMDA_PASSWORD"]
+username=os.environ["AMDA_USER"]
+password=os.environ["AMDA_PASSWORD"]
+
 from amdapy.amdaWSClient.client import get_derived, list_derived
 
 derived_params=list_derived(username, password)
