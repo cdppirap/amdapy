@@ -3,10 +3,10 @@
 :author: Alexandre Schulz
 :brief: AMDA dataset tree representation.
 
-Using the :meth:`amdapy.amdaWSClient.client.get_obs_tree` method we can retrieve an XML file containing
+Using the :meth:`amdapy.rest.client.get_obs_tree` method we can retrieve an XML file containing
 descriptions of all available datasets, and the parameters therein. The :class:`ObsTree` is used for 
 parsing the elements of the XML file and returning dataset and parameter descriptions. Since the 
-:mod:`amdapy.amdaWSClient.client` module provides functions for retrieving *datasets* and *parameters*, 
+:mod:`amdapy.rest.client` module provides functions for retrieving *datasets* and *parameters*, 
 navigating the AMDA catalogue involves gathering descriptions of datasets and parameters. It is noted
 that in AMDA all datasets are timeseries. Although nothing specific to timeseries has yet been implemented
 it is good to keep this in mind.
@@ -132,7 +132,7 @@ class ParameterElement:
     """Component iterator
 
     :return: components one by one
-    :rtype: amdapy.amdaWSClient.obstree.ComponentElement
+    :rtype: amdapy.rest.obstree.ComponentElement
     """
     for c in self.components:
       yield c
@@ -206,7 +206,7 @@ class MissionElement:
     :param instrument_name: instrument name
     :type instrument_name: str
     :return: instrument if found , None otherwise
-    :rtype: amdapy.amdaWSClient.obstree.InstrumentElement or None
+    :rtype: amdapy.rest.obstree.InstrumentElement or None
     """
     for i in self.instruments:
         if i.name == instrument_name:

@@ -4,4 +4,4 @@ scripts/__pycache__
 *.pyc
 res
 amdapy.egg-info
-
+docs/_build

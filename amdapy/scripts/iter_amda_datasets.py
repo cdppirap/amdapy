@@ -6,7 +6,7 @@ Simple script for testing the implementation of the amda dataset iterator
 """
 import sys
 sys.path.insert(0,"/home/aschulz")
-from amdapy.amdaWSClient.client import get_obs_tree
+from amdapy.rest.client import get_obs_tree
 from amdapy.session import Session
 import datetime
 

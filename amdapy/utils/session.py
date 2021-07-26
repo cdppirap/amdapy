@@ -7,8 +7,8 @@ import os
 import numpy as np
 import datetime
 
-from amdapy.amdaWSClient.client import get_obs_tree, get_dataset
-from amdapy.ddtime import dt_to_seconds
+from amdapy.rest.client import get_obs_tree, get_dataset
+from amdapy.core.ddtime import dt_to_seconds
 
 class Session:
   def __init__(self, dbpath="amda.db"):

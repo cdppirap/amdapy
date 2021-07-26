@@ -22,7 +22,7 @@ hierarchy::
 import amdapy
 import datetime
 import pandas as pd
-from amdapy.amdaWSClient.client import get_obs_tree
+from amdapy.rest.client import get_obs_tree
 import matplotlib.pyplot as plt
 
 class Parameter:
@@ -101,7 +101,7 @@ class Dataset:
   the object constructor can be called without setting the data. 
 
   :param el: dataset unique identificator
-  :type el: amdapy.amdaWSClient.client.DatasetElement
+  :type el: amdapy.rest.client.DatasetElement
   :param data: optional (default: None), dataset content 
   :type data: array type
   
@@ -228,10 +228,10 @@ class AMDA:
     self.name="AMDA"
     self.collection=Collection()
   def _datasetel_to_dataset(self, datasetel, start, stop, sampling=None):
-    """Convert a :class:`amdapy.amdaWSClient.obstree.DatasetElement` object to a :class:`amdapy.amda.AMDADataset` object
+    """Convert a :class:`amdapy.rest.obstree.DatasetElement` object to a :class:`amdapy.amda.AMDADataset` object
 
     :param datasetel: dataset representation
-    :type datasetel: amdapy.amdaWSClient.obstree.DatasetElement
+    :type datasetel: amdapy.rest.obstree.DatasetElement
     :param start: data start time
     :type start: datetime.datetime
     :param stop: data stop time
@@ -255,7 +255,7 @@ class AMDA:
       start=stop - datetime.timedelta(days=1)
     else:
       pass
-    data=amdapy.amdaWSClient.client.get_dataset(did, start, stop, cols, sampling=sampling)
+    data=amdapy.rest.client.get_dataset(did, start, stop, cols, sampling=sampling)
     data.columns=cols
     data["Time"]=pd.to_datetime(data["Time"])
     data.set_index("Time",inplace=True)
@@ -321,9 +321,9 @@ class AMDA:
     """
     # check that the dates provided are datetime objects, if not then convert them
     if isinstance(start, str):
-      start=datetime.datetime.strptime(start,amdapy.amdaWSClient.client.DATE_FORMAT) 
+      start=datetime.datetime.strptime(start,amdapy.rest.client.DATE_FORMAT) 
     if isinstance(stop , str):
-      stop=datetime.datetime.strptime(stop, amdapy.amdaWSClient.client.DATE_FORMAT)
+      stop=datetime.datetime.strptime(stop, amdapy.rest.client.DATE_FORMAT)
     # check is item is a string, if it is then search for a dataset or parameter
     if isinstance(item, str):
       desc=self.collection.find(item)
@@ -424,7 +424,7 @@ class AMDA:
       start=stop - datetime.timedelta(days=1)
     else:
       pass
-    d=amdapy.amdaWSClient.client.get_parameter(param.id, start,stop, col_names, sampling=sampling)
+    d=amdapy.rest.client.get_parameter(param.id, start,stop, col_names, sampling=sampling)
     d.set_index("Time", inplace=True)
     return Parameter(id=param.id, name=param.name, data=d,units=param.units)
   def get_dataset(self, dataset_item, start=None, stop=None, sampling=None):
@@ -498,9 +498,9 @@ class AMDA:
 
 
   def list_derived(self,userid, password):
-      return amdapy.amdaWSClient.client.list_derived(userid, password)
+      return amdapy.rest.client.list_derived(userid, password)
   def get_derived(self,userid, password, paramid, start, stop, sampling=None, col_names=None):
-      return amdapy.amdaWSClient.client.get_derived(userid,password,paramid,start,stop,sampling=sampling, col_names=col_names)
+      return amdapy.rest.client.get_derived(userid,password,paramid,start,stop,sampling=sampling, col_names=col_names)
   
 
 class _CollectionItem:
@@ -579,7 +579,7 @@ class Collection:
     """Get collection items for the parameters components
 
     :param param: parameter object
-    :type param: amdapy.amdaWSClient.obstree.ParameterElement
+    :type param: amdapy.rest.obstree.ParameterElement
     :return: parameter component collection items
     :rtype: list of amdapy.amda.Collection._Component
     """

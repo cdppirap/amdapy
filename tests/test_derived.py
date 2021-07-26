@@ -5,7 +5,7 @@ import os
 username=os.environ["AMDA_USER"]
 password=os.environ["AMDA_PASSWORD"]
 
-from amdapy.amdaWSClient.client import get_derived, list_derived
+from amdapy.rest.client import get_derived, list_derived
 
 derived_params=list_derived(username, password)
 for dp in derived_params:

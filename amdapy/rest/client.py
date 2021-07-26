@@ -614,7 +614,7 @@ def get_dataset(dataset_id, start_date, stop_date, date_parser=None, sampling=No
     pfu=client.get_dataset(t,start,stop,dataset_id,sampling=sampling)
     if pfu is None:
       return None
-    #print("In amdaWSClient. get_dataset : pfu: {}".format(pfu))
+    #print("In rest. get_dataset : pfu: {}".format(pfu))
     resp=requests.get(pfu)
     data=pd.read_csv(io.StringIO(resp.text), comment="#", header=None, sep="\s+")
     return data
