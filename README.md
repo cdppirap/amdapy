@@ -1,5 +1,7 @@
 # amdapy
 
+:warning: Deprecated, use `speasy` instead.
+
 Python package for AMDA
 =======================
 
